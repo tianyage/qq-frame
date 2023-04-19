@@ -2,7 +2,8 @@
   "name": "tianyage/qq-frame",
   "type": "library",
   "require": {
-    "php": ">8.0"
+    "php": ">8.0",
+    "ext-curl": "*"
   },
   "autoload": {
     "psr-4": {

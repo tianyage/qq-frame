@@ -1,8 +1,8 @@
 <?php
 
-namespace tianya\qqFrame;
+namespace Tianyage\QqFrame;
 
-class Qy
+class Qy extends Common
 {
     
     /**
@@ -472,6 +472,6 @@ class Qy
         
         $url = "http://{$this->host}:{$this->port}{$path}";
         
-        return curl($url, post: json_encode($param));
+        return $this->curl($url, post: json_encode($param));
     }
 }

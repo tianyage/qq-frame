@@ -1,10 +1,10 @@
 <?php
 
-namespace tianya\QqFrame;
+namespace Tianyage\QqFrame;
 
-use tianya\qqFrame\Qy as qy;
-use tianya\qqFrame\Xlz as xlz;
-use tianya\qqFrame\Wq as wq;
+use Tianyage\QqFrame\Qy as qy;
+use Tianyage\QqFrame\Xlz as xlz;
+use Tianyage\QqFrame\Wq as wq;
 
 class Index
 {

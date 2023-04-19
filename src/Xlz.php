@@ -1,8 +1,8 @@
 <?php
 
-namespace tianya\qqFrame;
+namespace Tianyage\QqFrame;
 
-class Xlz
+class Xlz extends Common
 {
     
     /**
@@ -464,6 +464,6 @@ class Xlz
         
         $url = "http://{$this->host}:{$this->port}{$path}";
         
-        return curl($url, post: json_encode($param));
+        return $this->curl($url, post: json_encode($param));
     }
 }
