@@ -1,0 +1,19 @@
+{
+  "name": "tianyage/qq-frame",
+  "type": "library",
+  "require": {
+    "php": ">8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Tianyage\\QqFrame\\": "src/"
+    }
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "tianyage",
+      "email": "454701103@qq.com"
+    }
+  ]
+}
