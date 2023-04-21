@@ -1,6 +1,6 @@
 <?php
 
-namespace Tianyage\QqFrame;
+namespace Tianyage\QqFrame\lib;
 
 class Wq extends Common
 {

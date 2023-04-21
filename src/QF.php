@@ -2,11 +2,11 @@
 
 namespace Tianyage\QqFrame;
 
-use Tianyage\QqFrame\Qy as qy;
-use Tianyage\QqFrame\Xlz as xlz;
-use Tianyage\QqFrame\Wq as wq;
+use Tianyage\QqFrame\lib\Qy as qy;
+use Tianyage\QqFrame\lib\Xlz as xlz;
+use Tianyage\QqFrame\lib\Wq as wq;
 
-class Index
+class QF
 {
     
     public qy|xlz|wq $sdk;
