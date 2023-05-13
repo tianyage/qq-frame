@@ -555,6 +555,23 @@ class Qy extends Common
     }
     
     /**
+     * 踢出群成员
+     *
+     * @param int $group 群号
+     * @param int $toqq  对方QQ
+     *
+     * @return string
+     */
+    public function kick(int $group, int $toqq): string
+    {
+        $param = [
+            'group' => $group,
+            'toqq'  => $toqq,
+        ];
+        return $this->query('/kick', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path

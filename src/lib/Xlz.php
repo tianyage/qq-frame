@@ -445,6 +445,48 @@ class Xlz extends Common
     }
     
     /**
+     * 入群验证事件处理
+     *
+     * @param int    $group      群号
+     * @param int    $toqq       对方QQ
+     * @param int    $seq        消息Seq
+     * @param int    $oper_type  11同意 12拒绝 14忽略
+     * @param int    $event_type 事件类型(1:我被邀请加入群 3:某人申请加群)
+     * @param string $reason     可空, 当拒绝时，可在此设置拒绝理由
+     *
+     * @return string 不会有返回值
+     */
+    public function groupHandle(int $group, int $toqq, int $seq, int $oper_type, int $event_type, string $reason = ''): string
+    {
+        $param = [
+            'group'      => $group,
+            'toqq'       => $toqq,
+            'seq'        => $seq,
+            'oper_type'  => $oper_type,
+            'event_type' => $event_type,
+            'reason'     => $reason,
+        ];
+        return $this->query('/groupHandle', $param);
+    }
+    
+    /**
+     * 踢出群成员
+     *
+     * @param int $group 群号
+     * @param int $toqq  对方QQ
+     *
+     * @return string
+     */
+    public function kick(int $group, int $toqq): string
+    {
+        $param = [
+            'group' => $group,
+            'toqq'  => $toqq,
+        ];
+        return $this->query('/kick', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path

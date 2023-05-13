@@ -63,7 +63,7 @@ class Common
         }
         // 超时设置
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
         if ($gzip) {
             curl_setopt($ch, CURLOPT_ENCODING, "gzip");
         }
