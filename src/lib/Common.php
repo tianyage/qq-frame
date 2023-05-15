@@ -4,6 +4,18 @@ namespace Tianyage\QqFrame\lib;
 
 class Common
 {
+    public function buildGTK(string $skey): int
+    {
+        $len  = strlen($skey);
+        $hash = 5381;
+        for ($i = 0; $i < $len; $i++) {
+            //改下面两行
+            $hash += ((($hash << 5) & 0x7fffffff) + ord($skey[$i])) & 0x7fffffff;
+            $hash &= 0x7fffffff;
+        }
+        return $hash & 0x7fffffff;//计算g_tk
+    }
+    
     /**
      * @param string       $url
      * @param string|array $post
