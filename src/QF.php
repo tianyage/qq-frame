@@ -41,8 +41,10 @@ class QF extends Common
      */
     public function signArk(string $json): string
     {
+        $sdk = $this->sdk;
         $this->init('106.55.241.25', 2071267038, 4001);
-        $cookie = $this->sdk->getCookie('https://vip.qq.com/loginsuccess.html', 8000201, 18);
+        $cookie    = $this->sdk->getCookie('https://vip.qq.com/loginsuccess.html', 8000201, 18);
+        $this->sdk = $sdk;
         if ($cookie) {
             preg_match("/p_skey=(.*?);/", $cookie, $match);
             $gtk  = $this->buildGTK($match[1]);
