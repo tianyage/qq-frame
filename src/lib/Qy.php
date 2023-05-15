@@ -481,6 +481,24 @@ class Qy extends Common
     }
     
     /**
+     * 发送私聊json消息
+     *
+     * @param int|string $toqq
+     * @param string     $json
+     *
+     * @return string
+     */
+    public function sendFriendMsgJson(int|string $toqq, string $json): string
+    {
+        $param = [
+            'toqq' => $toqq,
+            'json' => $json,
+        ];
+        // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
+        return $this->query('/sendFriendMsgJson', $param);
+    }
+    
+    /**
      * 发送群消息
      *
      * @param int    $group_id
@@ -495,7 +513,25 @@ class Qy extends Common
             'content' => $content,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
-        return $this->query('/sendFriendMsg', $param);
+        return $this->query('/sendGroupMsg', $param);
+    }
+    
+    /**
+     * 发送群json消息
+     *
+     * @param int    $group_id
+     * @param string $json
+     *
+     * @return string
+     */
+    public function sendGroupMsgJson(int $group_id, string $json): string
+    {
+        $param = [
+            'group' => $group_id,
+            'json'  => $json,
+        ];
+        // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
+        return $this->query('/sendGroupMsgJson', $param);
     }
     
     
