@@ -21,7 +21,7 @@ class QF extends Common
      */
     final public function init(string $host, int $robot, int $port): qy|xlz
     {
-        if ($port === 3000 || $port === 3001) {
+        if ($port === 3000 || $port === 3001 || $port === 9999) {
             $this->sdk = new xlz();
         } else {
             $this->sdk = new qy();
