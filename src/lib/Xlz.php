@@ -522,6 +522,40 @@ class Xlz extends Common
     }
     
     /**
+     * 添加QQ
+     *
+     * @param int|string $qq       QQ号
+     * @param string     $pwd      密码
+     * @param int        $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 苹果QQ,普通QQ无法登录企业/企点
+     *
+     * @return string
+     */
+    public function add(int|string $qq, string $pwd, int $protocol): string
+    {
+        $param = [
+            'qq'       => $qq,
+            'pwd'      => $pwd,
+            'protocol' => $protocol,
+        ];
+        return $this->query('/add', $param);
+    }
+    
+    /**
+     * 登录指定QQ （需要先添加QQ）
+     *
+     * @param int|string $qq
+     *
+     * @return string
+     */
+    public function login(int|string $qq): string
+    {
+        $param = [
+            'qq' => $qq,
+        ];
+        return $this->query('/login', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
