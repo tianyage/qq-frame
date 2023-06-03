@@ -190,7 +190,8 @@ class Xlz extends Common
             if ($arr) {
                 return [
                     'status' => 2,
-                    'msg'    => $arr['retmsg'],
+                    'msg'    => '当前QQ不在线',
+                    'data'   => $arr,
                 ];
             } else {
                 return [
