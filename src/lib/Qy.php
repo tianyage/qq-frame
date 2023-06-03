@@ -217,20 +217,29 @@ class Qy extends Common
     /**
      * QQ是否在线
      *
-     * @return bool
+     * @return array
      */
-    public function checkOnline(): bool
+    public function checkOnline(): array
     {
         $res = $this->query('/getSessionkey'); // 失败返回json  成功返回32位字符串 访问超时返回空
         if ($res) {
             $arr = json_decode($res, true);
             if ($arr) {
-                return false;
+                return [
+                    'status' => 2,
+                    'msg'    => $arr['retmsg'],
+                ];
             } else {
-                return true;
+                return [
+                    'status' => 1,
+                    'msg'    => $res,
+                ];
             }
         } else {
-            return false;
+            return [
+                'status' => 2,
+                'msg'    => '访问接口超时',
+            ];
         }
     }
     
