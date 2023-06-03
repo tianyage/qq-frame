@@ -163,7 +163,7 @@ class Qy extends Common
      * 获取登录二维码
      *
      * @param int|string $qq       要登录的QQ号
-     * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9=手表
+     * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~15=手表
      *
      * @return array
      */
@@ -175,6 +175,8 @@ class Qy extends Common
                 $protocol = 9;
             } elseif ($protocol === 'ipad') {
                 $protocol = 5;
+            } elseif ($protocol === 'pc') {
+                $protocol = 8;
             } else {
                 $protocol = 9;
             }

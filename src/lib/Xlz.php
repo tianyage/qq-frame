@@ -97,6 +97,8 @@ class Xlz extends Common
                 $protocol = 5;
             } elseif ($protocol === 'ipad') {
                 $protocol = 6;
+            } elseif ($protocol === 'pc') {
+                $protocol = 9;
             } else {
                 $protocol = 5;
             }
