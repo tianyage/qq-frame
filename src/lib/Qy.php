@@ -271,10 +271,11 @@ class Qy extends Common
                 ];
             } elseif ($retcode === -11) {
                 $data = [
-                    'status' => 2,
+                    'status' => 4,
                     'msg'    => "申请二维码的{$this->robot_qq}与实际扫码的QQ号不一致，登录失败",
                 ];
             } elseif ($retcode === 53) {
+                // {"code":53,"msg":"扫码成功,点击继续登录即可完成上线","qrcode_qq":"454701103"}
                 $data = [
                     'status' => 3,
                     'msg'    => "{$this->robot_qq}扫码成功 等待确认",
@@ -288,6 +289,12 @@ class Qy extends Common
                 $data = [
                     'status' => 2,
                     'msg'    => "{$this->robot_qq}登录失败，QQ已不存在云端内",
+                ];
+            } elseif ($retcode === 0 && str_contains($retmsg, '登录成功')) {
+                // {"code":0,"msg":"确认登录成功！开始执行上线操作","qrcode_qq":"454701103"}
+                $data = [
+                    'status' => 3,
+                    'msg'    => "{$this->robot_qq}授权成功，开始执行登录上线操作",
                 ];
             } else {
                 // 其他错误

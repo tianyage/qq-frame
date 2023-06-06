@@ -240,7 +240,7 @@ class Xlz extends Common
             ];
         } elseif ($retcode === -108) {
             $data = [
-                'status' => 2,
+                'status' => 4,
                 'msg'    => "申请二维码的{{$this->robot_qq}}与实际扫码的QQ号不一致，登录失败",
             ];
         } elseif ($retcode === -107 || $retcode === 49) {
