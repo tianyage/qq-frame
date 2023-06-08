@@ -627,6 +627,55 @@ class Qy extends Common
     }
     
     /**
+     * 添加QQ
+     *
+     * @param int|string $qq       QQ号
+     * @param string     $pwd      密码
+     * @param int        $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~15=手表
+     *
+     * @return string
+     */
+    public function add(int|string $qq, string $pwd, int $protocol): string
+    {
+        $param = [
+            'qq'       => $qq,
+            'pwd'      => $pwd,
+            'protocol' => $protocol,
+        ];
+        return $this->query('/add', $param);
+    }
+    
+    /**
+     * 登录指定QQ （需要先添加QQ）
+     *
+     * @param int|string $qq
+     *
+     * @return string
+     */
+    public function login(int|string $qq): string
+    {
+        $param = [
+            'qq' => $qq,
+        ];
+        return $this->query('/login', $param);
+    }
+    
+    /**
+     * 下线指定QQ （需要先添加QQ）
+     *
+     * @param int|string $qq
+     *
+     * @return string
+     */
+    public function logout(int|string $qq): string
+    {
+        $param = [
+            'qq' => $qq,
+        ];
+        return $this->query('/logout', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path

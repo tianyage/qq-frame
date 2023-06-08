@@ -572,6 +572,21 @@ class Xlz extends Common
     }
     
     /**
+     * 下线指定QQ （需要先添加QQ）
+     *
+     * @param int|string $qq
+     *
+     * @return string
+     */
+    public function logout(int|string $qq): string
+    {
+        $param = [
+            'qq' => $qq,
+        ];
+        return $this->query('/logout', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
