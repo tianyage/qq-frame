@@ -163,16 +163,18 @@ class Qy extends Common
      * 获取登录二维码
      *
      * @param int|string $qq       要登录的QQ号
-     * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~15=手表
+     * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ
      *
      * @return array
      */
-    public function qrLogin(int|string $qq, int|string $protocol = 9): array
+    public function qrLogin(int|string $qq, int|string $protocol = 15): array
     {
         // 将字符串协议改为正确的code
         if (is_string($protocol)) {
             if ($protocol === 'watch') {
-                $protocol = 9;
+                $protocol = 15;
+            } elseif ($protocol === 'watch2') {
+                $protocol = 16;
             } elseif ($protocol === 'ipad') {
                 $protocol = 5;
             } elseif ($protocol === 'pc') {
