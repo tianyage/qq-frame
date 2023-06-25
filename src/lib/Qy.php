@@ -172,9 +172,9 @@ class Qy extends Common
         // 将字符串协议改为正确的code
         if (is_string($protocol)) {
             if ($protocol === 'watch') {
-                $protocol = 15;
+                $protocol = 9;
             } elseif ($protocol === 'watch2') {
-                $protocol = 16;
+                $protocol = 15;
             } elseif ($protocol === 'ipad') {
                 $protocol = 5;
             } elseif ($protocol === 'pc') {
@@ -505,15 +505,15 @@ class Qy extends Common
      * 发送私聊json消息
      *
      * @param int|string $toqq
-     * @param string     $json
+     * @param string     $base64_json
      *
      * @return string
      */
-    public function sendFriendMsgJson(int|string $toqq, string $json): string
+    public function sendFriendMsgJson(int|string $toqq, string $base64_json): string
     {
         $param = [
             'toqq' => $toqq,
-            'json' => $json,
+            'json' => $base64_json,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
         return $this->query('/sendFriendMsgJson', $param);
@@ -541,15 +541,15 @@ class Qy extends Common
      * 发送群json消息
      *
      * @param int    $group_id
-     * @param string $json
+     * @param string $base64_json
      *
      * @return string
      */
-    public function sendGroupMsgJson(int $group_id, string $json): string
+    public function sendGroupMsgJson(int $group_id, string $base64_json): string
     {
         $param = [
             'group' => $group_id,
-            'json'  => $json,
+            'json'  => $base64_json,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
         return $this->query('/sendGroupMsgJson', $param);

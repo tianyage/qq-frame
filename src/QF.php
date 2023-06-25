@@ -32,36 +32,34 @@ class QF extends Common
         return $this->sdk;
     }
     
-    /**
-     * QQ json消息签名
-     *
-     * @param string $json json代码
-     *
-     * @return string
-     */
-    public function signArk(string $json): string
-    {
-        $sdk = $this->sdk;
-        $this->init('106.55.241.25', 2071267038, 4001);
-        $cookie    = $this->sdk->getCookie('https://vip.qq.com/loginsuccess.html', 8000201, 18);
-        $this->sdk = $sdk;
-        if ($cookie) {
-            preg_match("/p_skey=(.*?);/", $cookie, $match);
-            $gtk  = $this->buildGTK($match[1]);
-            $url  = "https://zb.vip.qq.com/tx/trpc/ark-share/GenSignedArk?g_tk={$gtk}";
-            $post = json_encode(['ark' => $json]);
-            $ua   = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36';
-            $data = $this->curl($url, $post, cookie: $cookie, ua: $ua);
-            //            echo $data . PHP_EOL;
-            $arr = json_decode($data, true);
-            if ($arr['code'] === 0) {
-                return $arr['data']['signed_ark'];
-            } else {
-                return '';
-            }
-        }
-        return '';
-    }
+    //    /**
+    //     * QQ json消息签名
+    //     *
+    //     * @param string $json json代码
+    //     *
+    //     * @return string
+    //     */
+    //    public function signArk(string $json): string
+    //    {
+    //        $this->init('106.55.241.25', 908777454, 4002);
+    //        $cookie = $this->sdk->getCookie('https://vip.qq.com/loginsuccess.html', 8000201, 18);
+    //        if ($cookie) {
+    //            preg_match("/p_skey=(.*?);/", $cookie, $match);
+    //            $gtk  = $this->buildGTK($match[1]);
+    //            $url  = "https://zb.vip.qq.com/tx/trpc/ark-share/GenSignedArk?g_tk={$gtk}";
+    //            $post = json_encode(['ark' => $json]);
+    //            $ua   = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36';
+    //            $data = $this->curl($url, $post, cookie: $cookie, ua: $ua);
+    //            echo $data . PHP_EOL;
+    //            $arr = json_decode($data, true);
+    //            if ($arr['code'] === 0) {
+    //                return $arr['data']['signed_ark'];
+    //            } else {
+    //                return '';
+    //            }
+    //        }
+    //        return '';
+    //    }
     
     /**
      * 如果调用的方法不能访问，它将被触发
