@@ -171,17 +171,14 @@ class Qy extends Common
     {
         // 将字符串协议改为正确的code
         if (is_string($protocol)) {
-            if ($protocol === 'watch') {
-                $protocol = 9;
-            } elseif ($protocol === 'watch2') {
-                $protocol = 15;
-            } elseif ($protocol === 'ipad') {
-                $protocol = 5;
-            } elseif ($protocol === 'pc') {
-                $protocol = 8;
-            } else {
-                $protocol = 9;
-            }
+            $protocol = match ($protocol) {
+                'watch2' => 15,
+                'apad'   => 2,
+                'ipad'   => 5,
+                'pc'     => 8,
+                // 'watch'
+                default  => 9,
+            };
         }
         
         $param = [
