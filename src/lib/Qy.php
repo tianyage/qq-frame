@@ -387,39 +387,76 @@ class Qy extends Common
         // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
         $num = max($num, 1); // 最少点赞一次
         
-        $json = '';
+        //        $json    = '';
+        $succ = 0; // 点赞成功次数的统计
+        $err  = 0; // 点赞失败
+        //        $timeout = 0; // 点赞超时
+        $errmsg = ''; // 点赞错误信息
+        
         for ($i = 1; $i <= $num; $i++) {
             // 最多执行20次
             if ($i > 20) {
                 break;
             }
+            
+            // 判断点赞成功与失败
             $json = $this->query('/cardLike', [
                 'toqq' => $toqq,
             ]);
-            $arr  = json_decode($json, true);
-            // 没点赞成功的话就停止循环
-            if ($arr && $arr['retcode'] !== 0) {
-                break;
+            if ($json) {
+                $arr = json_decode($json, true);
+                // 成功
+                if ($arr['retcode'] === 0) {
+                    $succ++;
+                } elseif ($arr['retcode'] === 1) {
+                    // 没点赞成功（失败）的话就停止循环
+                    $err++;
+                    $errmsg = "TA不是你的好友";
+                    break;
+                } else {
+                    // 点赞失败后直接跳出循环
+                    $err++;
+                    $errmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+                    break;
+                }
+            } else {
+                $err++;
+                //                $timeout++;
+                $errmsg = '点赞超时';
             }
             
-            // 连续点赞做个延迟
-            if ($num > 1) {
-                usleep(20000);
+            // 连续点赞做个延迟 0.02s
+            if ($num > 2 && $num !== $i) {
+                usleep(20000); // 微秒
             }
         }
-        if ($json) {
-            $arr = json_decode($json, true);
-            if ($arr['retcode'] === 0) {
-                $msg = "名片点赞{$num}次成功";
-            } elseif ($arr['retcode'] === 1) {
-                $msg = "名片点赞{$num}次失败：TA不是你的好友";
+        
+        // 总结本次点赞信息
+        if ($num > 1) {
+            if ($err) {
+                $msg = "名片点赞{$num}次，其中{$succ}次成功（{$errmsg}）";
             } else {
-                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
-                $msg    = "名片点赞{$num}次失败：{$retmsg}";
+                $msg = "名片点赞成功{$num}次";
             }
+        } elseif ($succ) {
+            $msg = '名片点赞成功1次';
         } else {
-            $msg = "名片点赞超时";
+            $msg = '名片点赞失败1次：' . $errmsg;
         }
+        
+        //        if ($json) {
+        //            $arr = json_decode($json, true);
+        //            if ($arr['retcode'] === 0) {
+        //                $msg = "名片点赞{$num}次成功";
+        //            } elseif ($arr['retcode'] === 1) {
+        //                $msg = "名片点赞{$num}次失败：TA不是你的好友";
+        //            } else {
+        //                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+        //                $msg    = "名片点赞{$num}次失败：{$retmsg}";
+        //            }
+        //        } else {
+        //            $msg = "名片点赞超时";
+        //        }
         return $msg;
     }
     
