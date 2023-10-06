@@ -163,7 +163,7 @@ class Qy extends Common
      * 获取登录二维码
      *
      * @param int|string $qq       要登录的QQ号
-     * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ
+     * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ,19鸿蒙HD,20LiteQQ
      *
      * @return array
      */
@@ -667,7 +667,7 @@ class Qy extends Common
      *
      * @param int|string $qq       QQ号
      * @param string     $pwd      密码
-     * @param int        $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~15=手表
+     * @param int        $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ,19鸿蒙HD,20LiteQQ
      *
      * @return string
      */

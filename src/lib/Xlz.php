@@ -85,7 +85,7 @@ class Xlz extends Common
      * 获取登录二维码
      *
      * @param int|string $qq       要登录的QQ号
-     * @param int|string $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 苹果QQ,普通QQ无法登录企业/企点
+     * @param int|string $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
      *
      * @return array
      */
@@ -542,7 +542,7 @@ class Xlz extends Common
      *
      * @param int|string $qq       QQ号
      * @param string     $pwd      密码
-     * @param int        $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 苹果QQ,普通QQ无法登录企业/企点
+     * @param int        $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
      *
      * @return string
      */
