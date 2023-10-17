@@ -409,15 +409,17 @@ class Qy extends Common
                 if ($arr['retcode'] === 0) {
                     $succ++;
                 } elseif ($arr['retcode'] === 1) {
-                    // 没点赞成功（失败）的话就停止循环
                     $err++;
                     $errmsg = "TA不是你的好友";
-                    break;
+                    break; // 点赞失败的话就停止循环
+                } elseif ($arr['retcode'] === 404) {
+                    $err++;
+                    $errmsg = "自动更新已掉线";
+                    break; //点赞失败的话就停止循环
                 } else {
-                    // 点赞失败后直接跳出循环
                     $err++;
                     $errmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
-                    break;
+                    break; // 点赞失败后直接跳出循环
                 }
             } else {
                 $err++;
@@ -427,7 +429,7 @@ class Qy extends Common
             
             // 连续点赞做个延迟 0.02s
             if ($num > 2 && $num !== $i) {
-                usleep(20000); // 微秒
+                usleep(mt_rand(20000, 30000));  // 微秒
             }
         }
         
@@ -457,6 +459,52 @@ class Qy extends Common
         //        } else {
         //            $msg = "名片点赞超时";
         //        }
+        return $msg;
+    }
+    
+    /**
+     * 名片赞2
+     * （发功能包版，一次性点赞，可以减少接口访问次数了）
+     *
+     * @param string $toqq 对方QQ
+     * @param int    $num  点赞次数 默认1
+     *
+     * @return string
+     */
+    public function cardLike2(string $toqq, int $num = 1): string
+    {
+        // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
+        $num = max($num, 1); // 最少1赞
+        $num = min($num, 20); // 最多20赞
+        
+        // 根据数量使用不同的接口
+        if ($num > 1) {
+            $mod = '/cardLike2';
+        } else {
+            $mod = '/cardLike';
+        }
+        $json = $this->query($mod, [
+            'toqq' => $toqq,
+            'num'  => $num,
+        ]);
+        if ($json) {
+            $arr = json_decode($json, true);
+            // 成功
+            if ($arr['retcode'] === 0) {
+                $msg = "名片点赞{$num}次成功";
+            } elseif ($arr['retcode'] === 1) {
+                $msg = "名片点赞{$num}次失败：TA不是你的好友";
+            } elseif ($arr['retcode'] === 404) {
+                // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
+                $msg = "自动更新已掉线";
+            } else {
+                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+                $msg    = "名片点赞{$num}次失败：{$retmsg}";
+            }
+        } else {
+            $msg = '名片点赞超时';
+        }
+        
         return $msg;
     }
     
@@ -550,6 +598,7 @@ class Qy extends Common
             'json' => $base64_json,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
+        // {"retcode":16,"retmsg":"发送失败，请先添加对方为好友","time":"1696957329"}
         return $this->query('/sendFriendMsgJson', $param);
     }
     
@@ -568,6 +617,7 @@ class Qy extends Common
             'content' => $content,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
+        // {"retcode":110,"retmsg":"发送失败，你已被移出该群，请重新加群。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
         return $this->query('/sendGroupMsg', $param);
     }
     
