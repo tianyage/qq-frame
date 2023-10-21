@@ -9,13 +9,90 @@ class Xlz extends Common
      * 事件名称代码
      *
      */
-    public array $EVENT_TYPECODE = [
-        'addFreind'       => 105,
-        'addGroup'        => 3,
-        'invitedAddGroup' => 1,
-        'kick'            => 6,
+    public array $EVENT_TYPE_CODE = [
+        '群事件_我被邀请加入群'       => 1,
+        '群事件_某人加入了群'         => 2,
+        '群事件_某人申请加群'         => 3,
+        '群事件_群被解散'             => 4,
+        '群事件_某人退出了群'         => 5,
+        '群事件_某人被踢出群'         => 6,
+        '群事件_某人被禁言'           => 7,
+        '群事件_某人撤回事件'         => 8,
+        '群事件_某人被取消管理'       => 9,
+        '群事件_某人被赋予管理'       => 10,
+        '群事件_开启全员禁言'         => 11,
+        '群事件_关闭全员禁言'         => 12,
+        '群事件_开启匿名聊天'         => 13,
+        '群事件_关闭匿名聊天'         => 14,
+        '群事件_开启坦白说'           => 15,
+        '群事件_关闭坦白说'           => 16,
+        '群事件_允许群临时会话'       => 17,
+        '群事件_禁止群临时会话'       => 18,
+        '群事件_允许发起新的群聊'     => 19,
+        '群事件_禁止发起新的群聊'     => 20,
+        '群事件_允许上传群文件'       => 21,
+        '群事件_禁止上传群文件'       => 22,
+        '群事件_允许上传相册'         => 23,
+        '群事件_禁止上传相册'         => 24,
+        '群事件_某人被邀请入群'       => 25,
+        '群事件_展示成员群头衔'       => 26,
+        '群事件_隐藏成员群头衔'       => 27,
+        '群事件_某人被解除禁言'       => 28,
+        '群事件_群名变更'             => 32,
+        '群事件_系统提示'             => 33,
+        '群事件_群头像事件'           => 34,
+        '群事件_入场特效'             => 35,
+        '群事件_修改群名片'           => 36,
+        '群事件_群被转让'             => 37,
+        '群事件_匿名被禁言'           => 40,
+        '群事件_匿名被解除禁言'       => 41,
+        '群事件_某人的加群申请被拒绝' => 42,
+        '群事件_展示群互动标识'       => 43,
+        '群事件_隐藏群互动标识'       => 44,
+        '群事件_展示群成员等级'       => 45,
+        '群事件_隐藏群成员等级'       => 46,
+        
+        '好友事件_被好友删除'             => 100,
+        '好友事件_签名变更'               => 101,
+        '好友事件_昵称改变'               => 102,
+        '好友事件_某人撤回事件'           => 103,
+        '好友事件_有新好友'               => 104,
+        '好友事件_好友请求'               => 105,
+        '好友事件_对方同意了您的好友请求' => 106,
+        '好友事件_对方拒绝了您的好友请求' => 107,
+        '好友事件_资料卡点赞'             => 108,
+        '好友事件_签名点赞'               => 109,
+        '好友事件_签名回复'               => 110,
+        '好友事件_个性标签点赞'           => 111,
+        '好友事件_随心贴回复'             => 112,
+        '好友事件_随心贴增添'             => 113,
+        '好友事件_系统提示'               => 114,
+        '好友事件_随心贴点赞'             => 115,
+        '好友事件_匿名提问_被提问'        => 116,
+        '好友事件_匿名提问_被点赞'        => 117,
+        '好友事件_匿名提问_被回复'        => 118,
+        '好友事件_输入状态'               => 119,
+        '空间事件_与我相关'               => 29,
+        
+        '登录事件_电脑上线'             => 200,
+        '登录事件_电脑下线'             => 201,
+        '登录事件_移动设备上线'         => 202,
+        '登录事件_移动设备下线'         => 203,
+        '登录事件_其他应用登录验证请求' => 204,
+        '框架事件_登录成功'             => 31,
+        '框架事件_登录失败'             => 38,
     ];
     
+    public array $MSG_TYPE_CODE = [
+        '消息类型_临时会话'                  => 141,
+        '消息类型_临时会话_群临时'           => 0,
+        '消息类型_临时会话_讨论组临时'       => 1,
+        '消息类型_临时会话_公众号'           => 129,
+        '消息类型_临时会话_网页QQ咨询'       => 201,
+        '消息类型_临时会话_好友申请验证消息' => 134,
+        '消息类型_好友通常消息'              => 166,
+        '消息类型_讨论组消息'                => 83,
+    ];
     
     /**
      * IP或域名
@@ -45,7 +122,7 @@ class Xlz extends Common
      */
     private string $key;
     
-    public function init(string $host, int $robot, int $port = 3000, string $key = 'A2I8C'): void
+    public function init(string $host, int $robot, int $port = 6000, string $key = 'A2I8C'): void
     {
         $this->host     = $host;
         $this->robot_qq = $robot;
@@ -216,43 +293,51 @@ class Xlz extends Common
      */
     public function qrQuery(string $qr_id = ''): array
     {
-        $json    = $this->query('/qrQuery', ['qr_id' => $qr_id]);
-        $arr     = json_decode($json, true);
-        $retcode = $arr['retcode'];
-        $retmsg  = $arr['retmsg'];
-        if ($retcode === 0) {
-            // {"retcode":0,"retmsg":"登录成功","time":"1679663947"}
-            $data = [
-                'status' => 1,
-                'msg'    => "{$this->robot_qq}登录成功",
-            ];
-        } elseif ($retcode === 505 || $retcode === 504) {
-            // {"retcode":505,"retmsg":"等待用户扫码...","time":"1679663879"}
-            // {"retcode":504,"retmsg":"扫码成功，请在手机上确认登录","time":"1679663929"}
-            $data = [
-                'status' => 3,
-                'msg'    => "等待扫码或扫码后等待确认",
-            ];
-        } elseif ($retcode === -109) {
-            $data = [
-                'status' => 2,
-                'msg'    => "已主动取消了二维码登录",
-            ];
-        } elseif ($retcode === -108) {
-            $data = [
-                'status' => 4,
-                'msg'    => "申请二维码的{{$this->robot_qq}}与实际扫码的QQ号不一致，登录失败",
-            ];
-        } elseif ($retcode === -107 || $retcode === 49) {
-            $data = [
-                'status' => 2,
-                'msg'    => "二维码已超时，如需继续登录请重新获取",
-            ];
+        $json = $this->query('/qrQuery', ['qr_id' => $qr_id]);
+        if ($json) {
+            $arr     = json_decode($json, true);
+            $retcode = $arr['retcode'];
+            $retmsg  = $arr['retmsg'];
+            if ($retcode === 0) {
+                // {"retcode":0,"retmsg":"登录成功","time":"1679663947"}
+                $data = [
+                    'status' => 1,
+                    'msg'    => "{$this->robot_qq}登录成功",
+                ];
+            } elseif ($retcode === 505 || $retcode === 504) {
+                // {"retcode":505,"retmsg":"等待用户扫码...","time":"1679663879"}
+                // {"retcode":504,"retmsg":"扫码成功，请在手机上确认登录","time":"1679663929"}
+                $data = [
+                    'status' => 3,
+                    'msg'    => "等待扫码或扫码后等待确认",
+                ];
+            } elseif ($retcode === -109) {
+                $data = [
+                    'status' => 2,
+                    'msg'    => "已主动取消了二维码登录",
+                ];
+            } elseif ($retcode === -108) {
+                $data = [
+                    'status' => 4,
+                    'msg'    => "申请二维码的{{$this->robot_qq}}与实际扫码的QQ号不一致，登录失败",
+                ];
+            } elseif ($retcode === -107 || $retcode === 49) {
+                $data = [
+                    'status' => 2,
+                    'msg'    => "二维码已超时，如需继续登录请重新获取",
+                ];
+            } else {
+                // 其他错误
+                $data = [
+                    'status' => 2,
+                    'msg'    => "{{$this->robot_qq}}登录失败：{$retmsg}",
+                ];
+            }
         } else {
             // 其他错误
             $data = [
-                'status' => 2,
-                'msg'    => "{{$this->robot_qq}}登录失败：{$retmsg}",
+                'status' => 3,
+                'msg'    => "服务器访问超时",
             ];
         }
         return $data;
@@ -297,8 +382,8 @@ class Xlz extends Common
     /**
      * 名片赞
      *
-     * @param string $toqq
-     * @param int    $num
+     * @param string $toqq 对方QQ
+     * @param int    $num  点赞次数 默认1
      *
      * @return string
      */
@@ -307,32 +392,78 @@ class Xlz extends Common
         // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
         $num = max($num, 1); // 最少点赞一次
         
-        $json = '';
+        //        $json    = '';
+        $succ = 0; // 点赞成功次数的统计
+        $err  = 0; // 点赞失败
+        //        $timeout = 0; // 点赞超时
+        $errmsg = ''; // 点赞错误信息
+        
         for ($i = 1; $i <= $num; $i++) {
             // 最多执行20次
             if ($i > 20) {
                 break;
             }
+            
+            // 判断点赞成功与失败
             $json = $this->query('/cardLike', [
                 'toqq' => $toqq,
             ]);
+            if ($json) {
+                $arr = json_decode($json, true);
+                // 成功
+                if ($arr['retcode'] === 0) {
+                    $succ++;
+                } elseif ($arr['retcode'] === 1) {
+                    $err++;
+                    $errmsg = "TA不是你的好友";
+                    break; // 点赞失败的话就停止循环
+                } elseif ($arr['retcode'] === 404) {
+                    $err++;
+                    $errmsg = "自动更新已掉线";
+                    break; //点赞失败的话就停止循环
+                } else {
+                    $err++;
+                    $errmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+                    break; // 点赞失败后直接跳出循环
+                }
+            } else {
+                $err++;
+                //                $timeout++;
+                $errmsg = '点赞超时';
+            }
             
-            // 连续点赞做个延迟
-            if ($num > 1) {
+            // 连续点赞做个延迟 0.02s
+            if ($num > 2 && $num !== $i) {
                 usleep(mt_rand(20000, 30000));  // 微秒
             }
         }
-        if ($json) {
-            $arr = json_decode($json, true);
-            if ($arr['retcode'] === 0) {
-                $msg = "名片点赞{$num}次成功";
+        
+        // 总结本次点赞信息
+        if ($num > 1) {
+            if ($err) {
+                $msg = "名片点赞{$num}次，其中{$succ}次成功（{$errmsg}）";
             } else {
-                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
-                $msg    = "名片点赞{$num}次失败：{$retmsg}";
+                $msg = "名片点赞成功{$num}次";
             }
+        } elseif ($succ) {
+            $msg = '名片点赞成功1次';
         } else {
-            $msg = "名片点赞超时";
+            $msg = '名片点赞失败1次：' . $errmsg;
         }
+        
+        //        if ($json) {
+        //            $arr = json_decode($json, true);
+        //            if ($arr['retcode'] === 0) {
+        //                $msg = "名片点赞{$num}次成功";
+        //            } elseif ($arr['retcode'] === 1) {
+        //                $msg = "名片点赞{$num}次失败：TA不是你的好友";
+        //            } else {
+        //                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+        //                $msg    = "名片点赞{$num}次失败：{$retmsg}";
+        //            }
+        //        } else {
+        //            $msg = "名片点赞超时";
+        //        }
         return $msg;
     }
     
@@ -630,6 +761,46 @@ class Xlz extends Common
             'qq' => $qq,
         ];
         return $this->query('/logout', $param);
+    }
+    
+    
+    /**
+     * 领取红包
+     *
+     * @param int|string $toqq    红包发送人QQ
+     * @param int|string $group   红包所在群号
+     * @param string     $redpack 红包代码
+     *
+     * @return string 一段json
+     *  {"retcode":"0","retmsg":"ok","skey":"v09dfa57922653004a23210948310ad3","skey_expire":"1500","trans_seq":"0","recv_object":{"amount":"1"},"send_object":{"bus_type":"2","channel":"65536","feedsid":"","grab_uin_list":"","hb_idiom":"","idiom_alpha":"","idiom_seq":"","is_first_grap":"1","is_owner":"0","listid":"10000466012310181400115814156600","poem_rule":"","rareword_explain_url":"https://h5.qianbao.qq.com/rareWordRedPacket?_wwv=516&_wv=16781312&rareWord=%E5%BA%8A%E5%89%8D%E6%98%8E%E6%9C%88%E5%85%89%E7%96%91%E6%98%AF%E5%9C%B0%E4%B8%8A%E9%9C%9C","send_name":"simon??","send_tinyid":"","send_uin":"454701103","show_pron":"","type":"1","wishing":"床前明月光疑是地上霜"},"state":"0","need_realname_flag":"0"}
+     */
+    public function redpack(int|string $toqq, int|string $group, string $redpack): string
+    {
+        // QY框架  群里拼手气红包
+        // [redpack,tps=\u51c0\u5316\u7f51\u7edc\u73af\u5883\uff0c\u7ef4\u62a4\u548c\u8c10\u793e\u4f1a\uff0c\u7ea2\u5305\u6d88\u606f\u5df2\u505c\u7528,title=测试,channel=1]
+        //
+        //panda 群拼手气  apad扫码
+        // [redpack,listid=10000320012310183600112515134500,authkey=15b9af62ec68a0468800735bb304fa39o7,title=哈哈,common=false,subtype=6,channel=1]
+        //
+        // [redpack,listid=10000320012310183600102391158100,authkey=78ff890bb756efad0e424ebf425c757bey,title=123,common=false,subtype=6,channel=1]
+        //
+        //群普通红包
+        // [redpack,listid=10000466012310181400115814094400,authkey=90e5661753f8c870ccfab6678d7d611fo2,title=6,common=true,subtype=4,channel=1]
+        //
+        //群专属
+        // [redpack,touins=908777454|,listid=10000466012310183700111092596600,authkey=283cb308ec8b1bdbd1fec72776abd4c0nj,title=恭喜发财,common=false,subtype=16,channel=1024]
+        //
+        // 群口令
+        // [redpack,listid=10000466012310181400105716573800,authkey=584da0093c820c58a47a80989c5de43cmk,title=确认过眼神，我是对的人,common=false,subtype=12,channel=32]
+        //
+        //语音红包
+        // [redpack,listid=10000466012310181400115814156600,authkey=17492ed786c0b4a2b963705fdd8ca39fc4,title=床前明月光疑是地上霜,common=false,subtype=26,channel=65536]
+        $param = [
+            'toqq'    => $toqq,
+            'group'   => $group,
+            'redpack' => $redpack,
+        ];
+        return $this->query('/hb', $param);
     }
     
     /**

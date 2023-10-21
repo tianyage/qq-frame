@@ -762,6 +762,45 @@ class Qy extends Common
     }
     
     /**
+     * 领取红包
+     * (QY不支持领红包)
+     *
+     * @param int|string $toqq    红包发送人QQ
+     * @param int|string $group   红包所在群号
+     * @param string     $redpack 红包代码
+     *
+     * @return string
+     */
+    public function redpack(int|string $toqq, int|string $group, string $redpack): string
+    {
+        // QY框架  群里拼手气红包
+        // [redpack,tps=\u51c0\u5316\u7f51\u7edc\u73af\u5883\uff0c\u7ef4\u62a4\u548c\u8c10\u793e\u4f1a\uff0c\u7ea2\u5305\u6d88\u606f\u5df2\u505c\u7528,title=测试,channel=1]
+        //
+        //panda 群拼手气  apad扫码
+        // [redpack,listid=10000320012310183600112515134500,authkey=15b9af62ec68a0468800735bb304fa39o7,title=哈哈,common=false,subtype=6,channel=1]
+        //
+        // [redpack,listid=10000320012310183600102391158100,authkey=78ff890bb756efad0e424ebf425c757bey,title=123,common=false,subtype=6,channel=1]
+        //
+        //群普通红包
+        // [redpack,listid=10000466012310181400115814094400,authkey=90e5661753f8c870ccfab6678d7d611fo2,title=6,common=true,subtype=4,channel=1]
+        //
+        //群专属
+        // [redpack,touins=908777454|,listid=10000466012310183700111092596600,authkey=283cb308ec8b1bdbd1fec72776abd4c0nj,title=恭喜发财,common=false,subtype=16,channel=1024]
+        //
+        // 群口令
+        // [redpack,listid=10000466012310181400105716573800,authkey=584da0093c820c58a47a80989c5de43cmk,title=确认过眼神，我是对的人,common=false,subtype=12,channel=32]
+        //
+        //语音红包
+        // [redpack,listid=10000466012310181400115814156600,authkey=17492ed786c0b4a2b963705fdd8ca39fc4,title=床前明月光疑是地上霜,common=false,subtype=26,channel=65536]
+        $param = [
+            'toqq'    => $toqq,
+            'group'   => $group,
+            'redpack' => $redpack,
+        ];
+        return $this->query('/hb', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
