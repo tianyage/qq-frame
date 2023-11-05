@@ -418,7 +418,7 @@ class Qy extends Common
                     break; //点赞失败的话就停止循环
                 } else {
                     $err++;
-                    $errmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+                    $errmsg = ($arr['retmsg'] ?: "手表协议风控中") . "[{$arr['retcode']}]";
                     break; // 点赞失败后直接跳出循环
                 }
             } else {
@@ -443,22 +443,9 @@ class Qy extends Common
         } elseif ($succ) {
             $msg = '名片点赞成功1次';
         } else {
-            $msg = '名片点赞失败1次：' . $errmsg;
+            $msg = "名片点赞失败1次：{$errmsg}";
         }
         
-        //        if ($json) {
-        //            $arr = json_decode($json, true);
-        //            if ($arr['retcode'] === 0) {
-        //                $msg = "名片点赞{$num}次成功";
-        //            } elseif ($arr['retcode'] === 1) {
-        //                $msg = "名片点赞{$num}次失败：TA不是你的好友";
-        //            } else {
-        //                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
-        //                $msg    = "名片点赞{$num}次失败：{$retmsg}";
-        //            }
-        //        } else {
-        //            $msg = "名片点赞超时";
-        //        }
         return $msg;
     }
     
@@ -474,11 +461,12 @@ class Qy extends Common
     public function cardLike2(string $toqq, int $num = 1): string
     {
         // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
+        
         $num = max($num, 1); // 最少1赞
         $num = min($num, 20); // 最多20赞
         
         // 根据数量使用不同的接口
-        if ($num > 1) {
+        if ($num > 5) {
             $mod = '/cardLike2';
         } else {
             $mod = '/cardLike';
@@ -487,6 +475,11 @@ class Qy extends Common
             'toqq' => $toqq,
             'num'  => $num,
         ]);
+        
+        // {"retcode":51,"retmsg":"每天最多给她点20个赞哦。","msg":"给2362836002点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D000077080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D0000470A0A000112D1419A0822427180E530334623E6AF8FE5A4A9E69C80E5A49AE7BB99E5A5B9E782B93230E4B8AAE8B59EE593A6E380820B13000000008CD604222C3D000C4CFC150B8C980CA80C"}
+        
+        // {"retcode":1,"retmsg":"not friend","msg":"给2362836001点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D00005E080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D00002E0A0A00011257CD76C722427180E53001460A6E6F7420667269656E640B13000000008CD604212C3D000C4CFC150B8C980CA80C"}
+        
         if ($json) {
             $arr = json_decode($json, true);
             // 成功
@@ -498,7 +491,7 @@ class Qy extends Common
                 // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
                 $msg = "自动更新已掉线";
             } else {
-                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+                $retmsg = ($arr['retmsg'] ?: "手表协议风控中") . "[{$arr['retcode']}]";
                 $msg    = "名片点赞{$num}次失败：{$retmsg}";
             }
         } else {

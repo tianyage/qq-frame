@@ -21,7 +21,7 @@ class QF extends Common
      */
     final public function init(string $host, int $robot, int $port): qy|xlz
     {
-        if (str_starts_with($port, 6)) {
+        if (str_starts_with($port, 7)) {
             $this->sdk = new xlz();
         } else {
             $this->sdk = new qy();
