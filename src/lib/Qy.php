@@ -295,7 +295,17 @@ class Qy extends Common
                     'status' => 3,
                     'msg'    => "{$this->robot_qq}授权成功，开始执行登录上线操作",
                 ];
+            } elseif ($retcode === 0 && !$retmsg) {
+                // 虽然返回了code0 但是成功登录的时候应该有retmsg，那就retmsg为空的时候算作等待扫码完成
+                $data = [
+                    'status' => 3,
+                    'msg'    => "{$this->robot_qq}扫码成功 等待确认[2]",
+                ];
             } else {
+                if (function_exists('trace')) {
+                    trace($json . PHP_EOL, 'qrQuery');
+                }
+                
                 // 其他错误
                 $data = [
                     'status' => 2,
@@ -818,6 +828,33 @@ class Qy extends Common
             'group' => $group,
         ];
         return $this->query('/getRedpackList', $param);
+    }
+    
+    /**
+     * 添加好友
+     * 也可用于同意好友请求
+     *
+     * @param int|string $toqq   对方QQ
+     * @param string     $answer 回答问题的答案或是验证消息，多个问题答案用"|"分隔开。 （用于同意好友请求似乎可留空）
+     *
+     * @return string
+     */
+    public function addFriend(int|string $toqq, string $answer = ''): string
+    {
+        $param = [
+            'toqq'   => $toqq,
+            'answer' => $answer,
+        ];
+        
+        // {"retcode":0,"retmsg":"添加好友成功","time":"1702033257"}
+        // {"retcode":1,"retmsg":"发送添加请求成功，等待验证通过","time":"1702033226"}
+        // {"retcode":2,"retmsg":"对方拒绝被任何人添加为好友","time":"1702251001"}
+        // {"retcode":3,"retmsg":"答案回答错误，问题文本：解封密码『8』","time":"1702289243"}
+        // {"retcode":4,"retmsg":"发送添加请求成功，等待验证通过，问题文本：你是谁？","time":"1702032430"}
+        // {"retcode":4,"retmsg":"发送添加请求成功，等待验证通过，问题文本：备注什么|你多大了？|加我有什么事吗","time":"1702382499"}
+        // {"retcode":101,"retmsg":"对方已为你的好友","time":"1702033288"}
+        // {"retcode":406,"retmsg":"添加好友前置条件为满足，请稍后再试！","time":"1702289963"}
+        return $this->query('/addFriend', $param);
     }
     
     /**

@@ -326,11 +326,27 @@ class Xlz extends Common
                     'status' => 2,
                     'msg'    => "二维码已超时，如需继续登录请重新获取",
                 ];
+            } elseif ($retcode === 3) {
+                //  {"retcode":3,"retmsg":"获取二维码状态失败","time":"1700825011"}
+                $data = [
+                    'status' => 3,
+                    'msg'    => "获取二维码状态失败",
+                ];
+            } elseif ($retcode === -2) {
+                //  {"retcode":-2,"retmsg":"扫码完成，登录失败错误代码:-2","time":"1701101228"}
+                $data = [
+                    'status' => 2,
+                    'msg'    => "扫码完成但登录失败，请稍后重试",
+                ];
             } else {
+                //                if (function_exists('trace')) {
+                //                    trace($json . PHP_EOL, 'qrQuery_xlz');
+                //                }
+                
                 // 其他错误
                 $data = [
                     'status' => 2,
-                    'msg'    => "{{$this->robot_qq}}登录失败：{$retmsg}",
+                    'msg'    => "{$this->robot_qq}登录失败：{$retmsg}",
                 ];
             }
         } else {
@@ -821,6 +837,24 @@ class Xlz extends Common
             'group' => $group,
         ];
         return $this->query('/getRedpackList', $param);
+    }
+    
+    /**
+     * 添加好友
+     * 也可用于同意好友请求
+     *
+     * @param int|string $toqq   对方QQ
+     * @param string     $answer 回答问题的答案或是验证消息，多个问题答案用"|"分隔开。 （用于同意好友请求似乎可留空）
+     *
+     * @return string
+     */
+    public function addFriend(int|string $toqq, string $answer = ''): string
+    {
+        $param = [
+            'toqq'   => $toqq,
+            'answer' => $answer,
+        ];
+        return $this->query('/addFriend', $param);
     }
     
     /**
