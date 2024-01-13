@@ -487,7 +487,7 @@ class Xlz extends Common
         $num = min($num, 20); // 最多20赞
         
         // 根据数量使用不同的接口
-        if ($num > 5) {
+        if ($num > 1) {
             $mod = '/cardLike2';
         } else {
             $mod = '/cardLike';
