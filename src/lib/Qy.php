@@ -332,7 +332,7 @@ class Qy extends Common
     {
         $res = $this->query('/del');
         $arr = json_decode($res, true);
-        if ($arr['retcode'] === 200 || $arr['retcode'] === 404) {
+        if ($arr && ($arr['retcode'] === 200 || $arr['retcode'] === 404)) {
             // 200成功 404 qq不存在
             $data = [
                 'status' => 1,
@@ -342,7 +342,7 @@ class Qy extends Common
             $data = [
                 'status' => 2,
                 'qr'     => '',
-                'msg'    => $arr['retmsg'],
+                'msg'    => $arr['retmsg'] ?? '删除错误',
             ];
         }
         return $data;
@@ -499,13 +499,13 @@ class Qy extends Common
                 $msg = "名片点赞{$num}次失败：TA不是你的好友";
             } elseif ($arr['retcode'] === 404) {
                 // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
-                $msg = "自动更新已掉线";
+                $msg = "名片点赞{$num}次失败：自动更新已掉线";
             } else {
-                $retmsg = ($arr['retmsg'] ?: "手表协议风控中") . "[{$arr['retcode']}]";
+                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
                 $msg    = "名片点赞{$num}次失败：{$retmsg}";
             }
         } else {
-            $msg = '名片点赞超时';
+            $msg = "名片点赞{$num}次超时";
         }
         
         return $msg;
@@ -738,6 +738,48 @@ class Qy extends Common
     }
     
     /**
+     * 撤回消息 私聊
+     *
+     * @param int $toqq   对方QQ
+     * @param int $random random
+     * @param int $req    req
+     * @param int $time   消息接受时间
+     *
+     * @return string
+     */
+    public function withdrawFriend(int $toqq, int $random, int $req, int $time): string
+    {
+        $param = [
+            'toqq'   => $toqq,
+            'random' => $random,
+            'req'    => $req,
+            'time'   => $time,
+        ];
+        return $this->query('/withdraw', $param);
+    }
+    
+    /**
+     * 撤回消息 群聊
+     * （管理员可以撤回他人）
+     *
+     * @param int $group  群号
+     * @param int $random random
+     * @param int $req    req
+     *
+     * @return string
+     */
+    public function withdrawGroup(int $group, int $random, int $req): string
+    {
+        $param = [
+            'group'  => $group,
+            'random' => $random,
+            'req'    => $req,
+        ];
+        return $this->query('/withdraw', $param);
+    }
+    
+    
+    /**
      * 添加QQ
      *
      * @param int|string $qq       QQ号
@@ -788,15 +830,17 @@ class Qy extends Common
     
     /**
      * 领取红包
-     * (QY不支持领红包)
+     * (手表不支持领红包)
      *
-     * @param int|string $toqq    红包发送人QQ
-     * @param int|string $group   红包所在群号
-     * @param string     $redpack 红包代码
+     * @param int|string $toqq      红包发送人QQ
+     * @param int|string $group     红包所在群号
+     * @param string     $redpack   红包代码
+     * @param string     $audiohash 语音包匹配的hash ，文字为恭喜发财
      *
      * @return string
+     * {"retcode":"0","retmsg":"ok","skey":"v09dfa57922653004a23210948310ad3","skey_expire":"1500","trans_seq":"0","recv_object":{"amount":"1"},"send_object":{"bus_type":"2","channel":"65536","feedsid":"","grab_uin_list":"","hb_idiom":"","idiom_alpha":"","idiom_seq":"","is_first_grap":"1","is_owner":"0","listid":"10000466012310181400115814156600","poem_rule":"","rareword_explain_url":"https://h5.qianbao.qq.com/rareWordRedPacket?_wwv=516&_wv=16781312&rareWord=%E5%BA%8A%E5%89%8D%E6%98%8E%E6%9C%88%E5%85%89%E7%96%91%E6%98%AF%E5%9C%B0%E4%B8%8A%E9%9C%9C","send_name":"simon??","send_tinyid":"","send_uin":"454701103","show_pron":"","type":"1","wishing":"床前明月光疑是地上霜"},"state":"0","need_realname_flag":"0"}
      */
-    public function redpack(int|string $toqq, int|string $group, string $redpack): string
+    public function redpack(int|string $toqq, int|string $group, string $redpack, string $audiohash = ''): string
     {
         // QY框架  群里拼手气红包
         // [redpack,tps=\u51c0\u5316\u7f51\u7edc\u73af\u5883\uff0c\u7ef4\u62a4\u548c\u8c10\u793e\u4f1a\uff0c\u7ea2\u5305\u6d88\u606f\u5df2\u505c\u7528,title=测试,channel=1]
@@ -818,9 +862,10 @@ class Qy extends Common
         //语音红包
         // [redpack,listid=10000466012310181400115814156600,authkey=17492ed786c0b4a2b963705fdd8ca39fc4,title=床前明月光疑是地上霜,common=false,subtype=26,channel=65536]
         $param = [
-            'toqq'    => $toqq,
-            'group'   => $group,
-            'redpack' => $redpack,
+            'toqq'      => $toqq,
+            'group'     => $group,
+            'redpack'   => $redpack,
+            'audiohash' => $audiohash,
         ];
         //
         //' 没实名 {"retcode":"0","retmsg":"根据国家政策，实名认证即可领取红包。实名信息仅用于公安部认证，QQ不会用于其他用途。24小时未领取，红包将被退回","returl":"tenpaysdk://idCardVerify","state":"5","balance":"0","need_realname_flag":"1"}
@@ -833,7 +878,7 @@ class Qy extends Common
         //
         //' 语音包领取失败
         //' {"retcode":"109020070","retmsg":"语音口令匹配失败","skey":"v09dfa40a21652ff75dc29459ec78851","skey_expire":"1500","trans_seq":"1","err_show_flag":"2"}
-        return $this->query('/hb', $param);
+        return $this->query('/redpack', $param);
     }
     
     /**
@@ -879,6 +924,64 @@ class Qy extends Common
         // {"retcode":101,"retmsg":"对方已为你的好友","time":"1702033288"}
         // {"retcode":406,"retmsg":"添加好友前置条件为满足，请稍后再试！","time":"1702289963"}
         return $this->query('/addFriend', $param);
+    }
+    
+    /**
+     * 解析CustomNode代码
+     * (取卡片消息代码)
+     *
+     * @param string $code_str [CustomNode,xxxx]
+     *
+     * @return string
+     * {"app":"com.tencent.multimsg","config":{"autosize":1,"forward":1,"round":1,"type":"normal","width":300},"extra":"{\"tsum\":2}","meta":{"detail":{"news":[{"text":" \uD83D\uDEF5\uD83D\uDEF4\uD83D\uDEB2\uD83D\uDE9C\u26DF\uD83D\uDE9B\uD83D\uDE9A\uD83D\uDE99\uD83D\uDE98\uD83D\uDE97\uD83D\uDE96\uD83D\uDE95\uD83D\uDE94\uD83D\uDE93\uD83D\uDE92:冻结查询 "},{"text":" \uD83D\uDEF5\uD83D\uDEF4\uD83D\uDEB2\uD83D\uDE9C\u26DF\uD83D\uDE9B\uD83D\uDE9A\uD83D\uDE99\uD83D\uDE98\uD83D\uDE97\uD83D\uDE96\uD83D\uDE95\uD83D\uDE94\uD83D\uDE93\uD83D\uDE92:菜单 "}],"resid":"jkEHjOlZUwtFm5aVN2md980jMTAFP4kL6nUne7pk4ur7PDst8FMKCNEQDaYxpBt5","source":" 群聊的聊天记录 ","summary":" 查看转发消息  ","uniseq":"8D8E6DDA-35A2-402B-B094-C20C9C5EFDB2"}},"prompt":"[聊天记录]","ver":"0.0.0.5","view":"contact"}
+     */
+    public function parserCustomNode(string $code_str): string
+    {
+        $param = [
+            'data' => $code_str,
+        ];
+        
+        return $this->query('/parserCustomNode', $param);
+    }
+    
+    /**
+     * 解析转发消息内容
+     * (取合并转发消息内容)
+     *
+     * @param string $resId 通过解析CustomNode代码可以获取到
+     *
+     * @return string
+     * {"richtexts":[{"filename":"MultiMsg","info":[{"card":"","fromqq":454701103,"fromgroup":0,"receivetime":0,"req":0,"random":0,"buddleid":3433,"content":"冻结查询"},{"card":"","fromqq":454701103,"fromgroup":0,"receivetime":0,"req":0,"random":0,"buddleid":3433,"content":"菜单"}]}]}
+     */
+    public function parserResId(string $resId): string
+    {
+        $param = [
+            'resId' => $resId,
+        ];
+        
+        return $this->query('/parserResId', $param);
+    }
+    
+    /**
+     * 生成customNode代码
+     * (上传合并转发消息)
+     *
+     * @param string $from    “{$from}的聊天记录” 例如:群聊、A和B
+     * @param string $text    （字符不可过多，这个接口会自动省略为...）定义封面消息内容,多条消息用符号"<[#]>"分隔,如【A: 巴拉巴拉<[#]>B: 巴拉巴拉<[#]>C: 巴拉巴拉】
+     * @param string $msgjson json格式,数据结构可参照API【取合并转发消息内容】的返回结果,"MultiMsg"是最外层的消息,嵌套使用filename作为索引。
+     *
+     * @return string
+     * [customNode,key=xxx]
+     */
+    public function buildCustomNode(string $from, string $text, string $msgjson): string
+    {
+        $param = [
+            'from'    => $from,
+            'text'    => $text,
+            'msgjson' => base64_encode($msgjson),
+        ];
+        
+        return $this->query('/buildCustomNode', $param);
     }
     
     /**
