@@ -606,7 +606,7 @@ class Xlz extends Common
             } else {
                 $data = [
                     'status' => 2,
-                    'msg'    => '发送失败：' . ($arr['retmsg'] ?? '未知错误'),
+                    'msg'    => "发送失败：[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
                 ];
             }
         } else {
@@ -643,16 +643,50 @@ class Xlz extends Common
      * @param int    $group_id
      * @param string $content
      *
-     * @return string
+     * @return array
      */
-    public function sendGroupMsg(int $group_id, string $content): string
+    public function sendGroupMsg(int $group_id, string $content): array
     {
         $param = [
             'group'   => $group_id,
             'content' => $content,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
-        return $this->query('/sendGroupMsg', $param);
+        // {"retcode":110,"retmsg":"发送失败，你已被移出该群，请重新加群。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
+        // {"retcode":120,"retmsg":"你已被禁言，消息无法发送。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
+        $json = $this->query('/sendGroupMsg', $param);
+        $arr  = json_decode($json, true);
+        if ($arr) {
+            if ($arr['retcode'] === 0) {
+                $data = [
+                    'status' => 1,
+                    'msg'    => '发送成功',
+                    'time'   => $arr['time'],
+                ];
+            } elseif ($arr['retcode'] === 110) {
+                $data = [
+                    'status' => 2,
+                    'msg'    => '发送失败，你已不在此群',
+                ];
+            } elseif ($arr['retcode'] === 120) {
+                $data = [
+                    'status' => 2,
+                    'msg'    => '发送失败，群内被禁言',
+                ];
+            } else {
+                $data = [
+                    'status' => 2,
+                    'msg'    => "发送失败：[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
+                ];
+            }
+        } else {
+            $data = [
+                'status' => 2,
+                'msg'    => '发送失败，接口返回错误',
+            ];
+        }
+        
+        return $data;
     }
     
     /**
