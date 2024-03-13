@@ -1018,6 +1018,25 @@ class Qy extends Common
     }
     
     /**
+     * 获取名片赞列表
+     *
+     * 同时返回赞我列表前30条数据和当日我赞他人列表
+     *
+     * @param int $offset 跳过多少条，默认从0开始获取
+     *
+     * @return string json，decode后的data为jce.view值
+     */
+    public function getMpzList(int $offset = 0): string
+    {
+        $param = [
+            'offset' => $offset,
+            'time'   => time(),
+        ];
+        
+        return $this->query('/getMpzList', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
