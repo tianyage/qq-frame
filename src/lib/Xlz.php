@@ -595,24 +595,36 @@ class Xlz extends Common
         ];
         // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
         $json = $this->query('/sendFriendMsg', $param);
-        $arr  = json_decode($json, true);
-        if ($arr) {
-            if ($arr['retcode'] === 0) {
-                $data = [
-                    'status' => 1,
-                    'msg'    => '发送成功',
-                    'time'   => $arr['time'],
-                ];
+        if ($json) {
+            $arr = json_decode($json, true);
+            if ($arr) {
+                if ($arr['retcode'] === 0) {
+                    $data = [
+                        'status' => 1,
+                        'msg'    => '发送成功',
+                        'time'   => $arr['time'],
+                    ];
+                } elseif ($arr['retcode'] === 16) {
+                    $data = [
+                        'status' => 3,
+                        'msg'    => '对方不是你的好友',
+                    ];
+                } else {
+                    $data = [
+                        'status' => 2,
+                        'msg'    => "发送失败：[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
+                    ];
+                }
             } else {
                 $data = [
                     'status' => 2,
-                    'msg'    => "发送失败：[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
+                    'msg'    => '返回结果格式错误',
                 ];
             }
         } else {
             $data = [
-                'status' => 2,
-                'msg'    => '发送失败，接口返回错误',
+                'status' => -1,
+                'msg'    => '发送失败，访问超时',
             ];
         }
         
