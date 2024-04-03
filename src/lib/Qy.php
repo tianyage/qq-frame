@@ -795,6 +795,7 @@ class Qy extends Common
     public function withdrawFriend(int $toqq, int $random, int $req, int $time): string
     {
         $param = [
+            'type'   => 'private',
             'toqq'   => $toqq,
             'random' => $random,
             'req'    => $req,
@@ -816,6 +817,7 @@ class Qy extends Common
     public function withdrawGroup(int $group, int $random, int $req): string
     {
         $param = [
+            'type'   => 'group',
             'group'  => $group,
             'random' => $random,
             'req'    => $req,
