@@ -397,6 +397,7 @@ class Xlz extends Common
     
     /**
      * 名片赞
+     * (非好友情况下进行点赞时返回成功，但不一定真正点上了，对方开启陌生人点赞时才能点上(手Q默认关闭陌生人点赞))
      *
      * @param string $toqq 对方QQ
      * @param int    $num  点赞次数 默认1
@@ -426,21 +427,31 @@ class Xlz extends Common
             ]);
             if ($json) {
                 $arr = json_decode($json, true);
-                // 成功
-                if ($arr['retcode'] === 0) {
-                    $succ++;
-                } elseif ($arr['retcode'] === 1) {
-                    $err++;
-                    $errmsg = "TA不是你的好友";
-                    break; // 点赞失败的话就停止循环
-                } elseif ($arr['retcode'] === 404) {
-                    $err++;
-                    $errmsg = "自动更新已掉线";
-                    break; //点赞失败的话就停止循环
+                if (isset($arr['retcode'])) {
+                    // 成功
+                    if ($arr['retcode'] === 0) {
+                        $succ++;
+                    } elseif ($arr['retcode'] === 1) {
+                        $err++;
+                        $errmsg = "TA不是你的好友";
+                        break; // 点赞失败的话就停止循环
+                    } elseif ($arr['retcode'] === 404) {
+                        $err++;
+                        $errmsg = "自动更新已掉线";
+                        break; //点赞失败的话就停止循环
+                    } else {
+                        $err++;
+                        $errmsg = ($arr['retmsg'] ?: "手表协议风控中") . "[{$arr['retcode']}]";
+                        break; // 点赞失败后直接跳出循环
+                    }
                 } else {
+                    if (function_exists('trace')) {
+                        trace($json . PHP_EOL, 'cardLike_xlz');
+                    }
+                    
                     $err++;
-                    $errmsg = ($arr['retmsg'] ?: "手表协议风控中") . "[{$arr['retcode']}]";
-                    break; // 点赞失败后直接跳出循环
+                    $errmsg = "异常数据";
+                    break; // 点赞失败的话就停止循环
                 }
             } else {
                 $err++;
@@ -476,10 +487,11 @@ class Xlz extends Common
      *
      * @param string $toqq 对方QQ
      * @param int    $num  点赞次数 默认1
+     * @param int    $type 点赞类型 1好友 27随心贴陌生人（好像无效）  31搜索QQ（好像无效）  5群友  12我赞过谁  41附近的人
      *
      * @return string
      */
-    public function cardLike2(string $toqq, int $num = 1): string
+    public function cardLike2(string $toqq, int $num = 1, int $type = 1): string
     {
         // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
         
@@ -495,6 +507,7 @@ class Xlz extends Common
         $json = $this->query($mod, [
             'toqq' => $toqq,
             'num'  => $num,
+            'type' => $type,
         ]);
         
         // {"retcode":51,"retmsg":"每天最多给她点20个赞哦。","msg":"给2362836002点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D000077080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D0000470A0A000112D1419A0822427180E530334623E6AF8FE5A4A9E69C80E5A49AE7BB99E5A5B9E782B93230E4B8AAE8B59EE593A6E380820B13000000008CD604222C3D000C4CFC150B8C980CA80C"}
@@ -1047,6 +1060,24 @@ class Xlz extends Common
         ];
         
         return $this->query('/getMpzList', $param);
+    }
+    
+    /**
+     * 发送输入状态
+     *
+     * @param int|string $toqq
+     * @param int        $code 1:正在输入,2:关闭显示,3:正在说话
+     *
+     * @return string
+     */
+    public function sendStatus(int|string $toqq, int $code = 1): string
+    {
+        $param = [
+            'toqq' => $toqq,
+            'code' => $code,
+        ];
+        
+        return $this->query('/sendStatus', $param);
     }
     
     /**
