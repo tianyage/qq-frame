@@ -1082,6 +1082,19 @@ class Qy extends Common
     }
     
     /**
+     * 获取好友申请的过滤列表
+     *
+     * @return string
+     */
+    public function getFriendFilterList(): string
+    {
+        $param = [
+        ];
+        
+        return $this->query('/getFriendFilterList', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
