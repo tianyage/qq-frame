@@ -622,6 +622,14 @@ class Xlz extends Common
                         'status' => 3,
                         'msg'    => '对方不是你的好友',
                     ];
+                } elseif ($arr['retcode'] === -1 || $arr['retcode'] === 1) {
+                    // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
+                    // {"retcode":1,"retmsg":"","time":"1714973481"}
+                    // 部分情况下 xlz的toqq是一个不存在的号码将会返回这个错误
+                    $data = [
+                        'status' => 3,
+                        'msg'    => '对方不是你的好友或号码不存在',
+                    ];
                 } else {
                     $data = [
                         'status' => 2,
