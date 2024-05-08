@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tianyage\QqFrame\lib;
 
 class Xlz extends Common
@@ -362,19 +364,33 @@ class Xlz extends Common
     /**
      * 获取cookie
      *
-     * @param string $callback_url 如QQ空间是：https://h5.qzone.qq.com/mqzone/index
-     * @param int    $appid        如QQ空间是：549000929
-     * @param int    $daid         如QQ空间是：5
+     * @param string $type  登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
+     * @param bool   $cache 是为框架cookie，否为实时登录url获取cookie
      *
      * @return string 失败或无权限返回空白
      */
-    public function getCookie(string $callback_url, int $appid, int $daid): string
+    public function getCookie(string $type, bool $cache = false): string
     {
-        $param = [
-            'url'   => $callback_url,
-            'appid' => $appid,
-            'daid'  => $daid,
+        // 不在此数组中的只能用登录网页来实时获取cookie
+        $cacheType = [
+            'qzoneh5',
+            'vip',
+            'pay',
+            'payh5',
+            'qun',
         ];
+        
+        $ret   = $this->getLoginParams($type);
+        $param = [
+            'url'   => urldecode($ret['u1']),
+            'appid' => $ret['aid'],
+            'daid'  => $ret['daid'],
+        ];
+        
+        if ($cache && in_array($type, $cacheType)) {
+            $param['type'] = $type;
+        }
+        
         return $this->query('/getCookie', $param);
     }
     
@@ -630,10 +646,16 @@ class Xlz extends Common
                         'status' => 3,
                         'msg'    => '对方不是你的好友或号码不存在',
                     ];
+                } elseif ($arr['retcode'] === 405) {
+                    // [405]该框架QQ未登录
+                    $data = [
+                        'status' => -1,
+                        'msg'    => 'QQ目前离线中',
+                    ];
                 } else {
                     $data = [
                         'status' => 2,
-                        'msg'    => "发送失败：[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
+                        'msg'    => "[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
                     ];
                 }
             } else {
@@ -645,7 +667,7 @@ class Xlz extends Common
         } else {
             $data = [
                 'status' => -1,
-                'msg'    => '发送失败，访问超时',
+                'msg'    => '访问超时',
             ];
         }
         
