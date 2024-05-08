@@ -367,9 +367,9 @@ class Xlz extends Common
      * @param string $type  登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
      * @param bool   $cache 是为框架cookie，否为实时登录url获取cookie
      *
-     * @return string 失败或无权限返回空白
+     * @return array
      */
-    public function getCookie(string $type, bool $cache = false): string
+    public function getCookie(string $type, bool $cache = false): array
     {
         // 不在此数组中的只能用登录网页来实时获取cookie
         $cacheType = [
@@ -391,7 +391,38 @@ class Xlz extends Common
             $param['type'] = $type;
         }
         
-        return $this->query('/getCookie', $param);
+        $json = $this->query('/getCookie', $param);
+        $arr  = json_decode($json, true);
+        if (!$json) {
+            $data = [
+                'status' => -1,
+                'msg'    => 'cookie获取超时',
+            ];
+        } elseif ($arr && $arr['retcode'] === 0) {
+            $cookie = $arr['data'];
+            preg_match('/skey=(.{10});/', $cookie, $skey);
+            preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
+            preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
+            
+            if (isset($skey[1]) && isset($p_skey[1]) && isset($pt4_token[1])) {
+                $data = [
+                    'status'    => 1,
+                    'msg'       => 'cookie获取成功',
+                    'cookie'    => $cookie,
+                    'skey'      => $skey[1],
+                    'p_skey'    => $p_skey[1],
+                    'pt4_token' => $pt4_token[1],
+                ];
+            } else {
+                throw new \Exception('cookie获取成功但解析失败');
+            }
+        } else {
+            $data = [
+                'status' => 2,
+                'msg'    => 'cookie获取失败',
+            ];
+        }
+        return $data;
     }
     
     /**
