@@ -368,6 +368,7 @@ class Xlz extends Common
      * @param bool   $cache 是为框架cookie，否为实时登录url获取cookie
      *
      * @return array
+     * @throws \Exception
      */
     public function getCookie(string $type, bool $cache = false): array
     {
@@ -404,14 +405,15 @@ class Xlz extends Common
             preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
             preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
             
-            if (isset($skey[1]) && isset($p_skey[1]) && isset($pt4_token[1])) {
+            if (isset($skey[1]) && isset($p_skey[1])) {
                 $data = [
                     'status'    => 1,
                     'msg'       => 'cookie获取成功',
                     'cookie'    => $cookie,
                     'skey'      => $skey[1],
                     'p_skey'    => $p_skey[1],
-                    'pt4_token' => $pt4_token[1],
+                    // pt4_token不是每个都有返回
+                    'pt4_token' => $pt4_token[1] ?? '',
                 ];
             } else {
                 throw new \Exception('cookie获取成功但解析失败');
