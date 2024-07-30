@@ -299,7 +299,7 @@ class Xlz extends Common
         if ($json) {
             $arr     = json_decode($json, true);
             $retcode = $arr['retcode'];
-            $retmsg  = $arr['retmsg'];
+            $retmsg  = $arr['retmsg'] ?: '无';
             if ($retcode === 0) {
                 // {"retcode":0,"retmsg":"登录成功","time":"1679663947"}
                 $data = [
@@ -313,15 +313,22 @@ class Xlz extends Common
                     'status' => 3,
                     'msg'    => "等待扫码或扫码后等待确认",
                 ];
+            } elseif ($retcode === 502) {
+                // 手机QQ摄像头扫码：设备网络不稳的或处于复杂网络环境
+                $data = [
+                    'status' => 2,
+                    'msg'    => "网络异常，请尝试使用Tim来授权或使用其他协议",
+                ];
             } elseif ($retcode === -109) {
                 $data = [
                     'status' => 2,
                     'msg'    => "已主动取消了二维码登录",
                 ];
-            } elseif ($retcode === -108) {
+            } elseif ($retcode === -108 || $retcode === -4) {
+                // -4 是racc框架返回的值
                 $data = [
                     'status' => 4,
-                    'msg'    => "申请二维码的{{$this->robot_qq}}与实际扫码的QQ号不一致，登录失败",
+                    'msg'    => "实际扫码QQ与本次申请的QQ{$this->robot_qq}不一致，登录失败[{$retcode}]",
                 ];
             } elseif ($retcode === -107 || $retcode === 49) {
                 $data = [
@@ -338,7 +345,7 @@ class Xlz extends Common
                 //  {"retcode":-2,"retmsg":"扫码完成，登录失败错误代码:-2","time":"1701101228"}
                 $data = [
                     'status' => 2,
-                    'msg'    => "扫码完成但登录失败，请稍后重试",
+                    'msg'    => "扫码完成但已被风控，请使用其他协议",
                 ];
             } else {
                 //                if (function_exists('trace')) {
@@ -348,7 +355,7 @@ class Xlz extends Common
                 // 其他错误
                 $data = [
                     'status' => 2,
-                    'msg'    => "{$this->robot_qq}登录失败：{$retmsg}",
+                    'msg'    => "{$this->robot_qq}登录失败：{$retmsg}[$retcode]",
                 ];
             }
         } else {
@@ -536,7 +543,7 @@ class Xlz extends Common
      *
      * @param string|int $toqq 对方QQ
      * @param int        $num  点赞次数 默认1
-     * @param int        $type 点赞类型 1好友 27随心贴陌生人（好像无效）  31搜索QQ（好像无效）  5群友  12我赞过谁  41附近的人
+     * @param int        $type 点赞类型 1好友 27随心贴陌生人（好像无效）  31搜索QQ（好像无效）  5群友  12我赞过谁  41附近的人 66点赞列表
      *
      * @return string
      */
@@ -676,8 +683,8 @@ class Xlz extends Common
                     // {"retcode":1,"retmsg":"","time":"1714973481"}
                     // 部分情况下 xlz的toqq是一个不存在的号码将会返回这个错误
                     $data = [
-                        'status' => 3,
-                        'msg'    => '对方不是你的好友或号码不存在',
+                        'status' => -2,
+                        'msg'    => '发送数据包失败',
                     ];
                 } elseif ($arr['retcode'] === 405) {
                     // [405]该框架QQ未登录
@@ -809,20 +816,28 @@ class Xlz extends Common
     /**
      * 好友请求事件处理
      *
-     * @param int $toqq      对方QQ
-     * @param int $seq       消息Seq
-     * @param int $oper_type 1同意 2拒绝
+     * @param int  $toqq      对方QQ
+     * @param int  $seq       消息Seq
+     * @param int  $oper_type 1同意 2拒绝
+     * @param bool $pack      是否需要自己发包 ，否为使用框架自身API (自己发包只能同意请求)
      *
      * @return string 不会有返回值
      */
-    public function friendHandle(int $toqq, int $seq, int $oper_type): string
+    public function friendHandle(int $toqq, int $seq, int $oper_type, bool $pack = false): string
     {
-        $param = [
-            'toqq'      => $toqq,
-            'seq'       => $seq,
-            'oper_type' => $oper_type,
-        ];
-        return $this->query('/friendHandle', $param);
+        if ($pack) {
+            $param = [
+                'toqq' => $toqq,
+            ];
+            return $this->query('/agreeFriend', $param);
+        } else {
+            $param = [
+                'toqq'      => $toqq,
+                'seq'       => $seq,
+                'oper_type' => $oper_type,
+            ];
+            return $this->query('/friendHandle', $param);
+        }
     }
     
     /**

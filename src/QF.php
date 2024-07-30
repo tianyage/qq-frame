@@ -21,10 +21,10 @@ class QF extends Common
      */
     final public function init(string $host, int $robot, int $port): qy|xlz
     {
-        if (str_starts_with($port, 7)) {
-            $this->sdk = new xlz();
-        } else {
+        if (str_starts_with($port, 4)) {
             $this->sdk = new qy();
+        } else {
+            $this->sdk = new xlz();
         }
         
         $this->sdk->init($host, $robot, $port);

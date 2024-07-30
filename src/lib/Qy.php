@@ -304,14 +304,14 @@ class Qy extends Common
                     'msg'    => "{$this->robot_qq}扫码成功 等待确认[2]",
                 ];
             } else {
-                if (function_exists('trace')) {
-                    trace($json . PHP_EOL, 'qrQuery');
-                }
+                //                if (function_exists('trace')) {
+                //                    trace($json . PHP_EOL, 'qrQuery');
+                //                }
                 
                 // 其他错误
                 $data = [
                     'status' => 2,
-                    'msg'    => "{$this->robot_qq}登录失败：{$retmsg}",
+                    'msg'    => "{$this->robot_qq}登录失败：{$retmsg}[$retcode]",
                 ];
             }
         } else {
@@ -525,7 +525,7 @@ class Qy extends Common
      *
      * @param string|int $toqq 对方QQ
      * @param int        $num  点赞次数 默认1
-     * @param int        $type 点赞类型 1好友 27随心贴陌生人（好像无效）  31搜索QQ（好像无效）  5群友  12我赞过谁  41附近的人
+     * @param int        $type 点赞类型 1好友 27随心贴陌生人（好像无效）  31搜索QQ（好像无效）  5群友  12我赞过谁  41附近的人 66点赞列表
      *
      * @return string
      */
@@ -791,14 +791,15 @@ class Qy extends Common
     
     /**
      * 好友请求事件处理
-     *
-     * @param int $toqq      对方QQ
-     * @param int $seq       消息Seq
-     * @param int $oper_type 1同意 2拒绝
-     *
-     * @return string 不会有返回值
+     * *
+     * * @param int $toqq 对方QQ
+     * * @param int $seq 消息Seq
+     * * @param int $oper_type 1同意 2拒绝
+     * * @param bool $pack QY不支持此参数
+     * *
+     * * @return string 不会有返回值
      */
-    public function friendHandle(int $toqq, int $seq, int $oper_type): string
+    public function friendHandle(int $toqq, int $seq, int $oper_type, bool $pack = false): string
     {
         $param = [
             'toqq'      => $toqq,
