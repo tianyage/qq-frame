@@ -306,37 +306,50 @@ class Xlz extends Common
                     'status' => 1,
                     'msg'    => "{$this->robot_qq}登录成功",
                 ];
-            } elseif ($retcode === 505 || $retcode === 504) {
+            } elseif ($retcode === 505) {
                 // {"retcode":505,"retmsg":"等待用户扫码...","time":"1679663879"}
+                $data = [
+                    'status' => 3,
+                    'msg'    => "等待扫码中",
+                ];
+            } elseif ($retcode === 504) {
                 // {"retcode":504,"retmsg":"扫码成功，请在手机上确认登录","time":"1679663929"}
                 $data = [
                     'status' => 3,
-                    'msg'    => "等待扫码或扫码后等待确认",
+                    'msg'    => "扫码成功，请在手机上确认登录",
                 ];
             } elseif ($retcode === 502) {
-                // 手机QQ摄像头扫码：设备网络不稳的或处于复杂网络环境
-                $data = [
-                    'status' => 2,
-                    'msg'    => "网络异常，请尝试使用Tim来授权或使用其他协议",
-                ];
+                // 实测 pandaLocal 用户在QQ中点击拒绝按钮或右上角X关闭，会返回502，但retmsg是空的
+                if ($retmsg === '无') {
+                    $data = [
+                        'status' => 2,
+                        'msg'    => "您已拒绝了本次登录请求",
+                    ];
+                } else {
+                    // 设备网络不稳的或处于复杂网络环境
+                    $data = [
+                        'status' => 2,
+                        'msg'    => "网络异常，请尝试使用TimAPP来授权",
+                    ];
+                }
             } elseif ($retcode === -109) {
                 $data = [
                     'status' => 2,
                     'msg'    => "已主动取消了二维码登录",
                 ];
-            } elseif ($retcode === -108 || $retcode === -4) {
-                // -4 是racc框架返回的值
+            } elseif ($retcode === -108) {
                 $data = [
                     'status' => 4,
                     'msg'    => "实际扫码QQ与本次申请的QQ{$this->robot_qq}不一致，登录失败[{$retcode}]",
                 ];
-            } elseif ($retcode === -107 || $retcode === 49) {
+            } elseif ($retcode === -107 || $retcode === 49 || $retcode === 503) {
+                // {"retcode":49,"retmsg":"","time":"1722509933"}
                 $data = [
                     'status' => 2,
                     'msg'    => "二维码已超时，如需继续登录请重新获取",
                 ];
             } elseif ($retcode === 3) {
-                //  {"retcode":3,"retmsg":"获取二维码状态失败","time":"1700825011"}
+                //  {"retcode":3,"retmsg":"获取二维码状态失败","time":"1700825011"} （应该是框架QQ存在，但是已超时(连接断开)会返回这个状态，和下面的code-4相反）
                 $data = [
                     'status' => 3,
                     'msg'    => "获取二维码状态失败",
@@ -346,6 +359,12 @@ class Xlz extends Common
                 $data = [
                     'status' => 2,
                     'msg'    => "扫码完成但已被风控，请使用其他协议",
+                ];
+            } elseif ($retcode === -4) {
+                //  {"retcode":-4,"retmsg":"查询二维码状态失败！错误代码 -4","time":"1722509284"}  （比如登录期间，QQ从框架中删除掉就会返回，应该就是QQ不存在框架中返回这个状态）
+                $data = [
+                    'status' => 2,
+                    'msg'    => "超时登录，如需继续登录请重新获取",
                 ];
             } else {
                 //                if (function_exists('trace')) {
@@ -678,13 +697,18 @@ class Xlz extends Common
                         'status' => 3,
                         'msg'    => '对方不是你的好友',
                     ];
-                } elseif ($arr['retcode'] === -1 || $arr['retcode'] === 1) {
+                } elseif ($arr['retcode'] === -1) {
                     // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
-                    // {"retcode":1,"retmsg":"","time":"1714973481"}
-                    // 部分情况下 xlz的toqq是一个不存在的号码将会返回这个错误
                     $data = [
                         'status' => -2,
                         'msg'    => '发送数据包失败',
+                    ];
+                } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
+                    // {"retcode":1,"retmsg":"","time":"1714973481"}
+                    $data = [
+                        'status' => 1,
+                        'msg'    => '发送完成，但消息疑似被屏蔽',
+                        'time'   => $arr['time'],
                     ];
                 } elseif ($arr['retcode'] === 405) {
                     // [405]该框架QQ未登录
@@ -766,7 +790,7 @@ class Xlz extends Common
             } elseif ($arr['retcode'] === 120) {
                 $data = [
                     'status' => 2,
-                    'msg'    => '发送失败，群内被禁言',
+                    'msg'    => '发送失败，群内你已被禁言',
                 ];
             } else {
                 $data = [
