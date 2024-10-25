@@ -125,6 +125,13 @@ class Qy extends Common
      */
     private string $key;
     
+    /**
+     * 接口访问超时时间 默认10s
+     *
+     * @var int
+     */
+    private int $timeout = 10;
+    
     public function init(string $host, int $robot, int $port = 4000, string $key = 'A2I8C'): void
     {
         $this->host     = $host;
@@ -133,6 +140,10 @@ class Qy extends Common
         $this->key      = $key;
     }
     
+    public function setTimeout(int $sec): void
+    {
+        $this->timeout = $sec;
+    }
     
     public function setRobotQq(int $qq): void
     {
@@ -1170,6 +1181,6 @@ class Qy extends Common
         
         $url = "http://{$this->host}:{$this->port}{$path}";
         
-        return $this->curl($url, post: json_encode($param));
+        return $this->curl($url, post: json_encode($param), timeout: $this->timeout);
     }
 }

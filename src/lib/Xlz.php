@@ -124,6 +124,13 @@ class Xlz extends Common
      */
     private string $key;
     
+    /**
+     * 接口访问超时时间 默认10s
+     *
+     * @var int
+     */
+    private int $timeout = 10;
+    
     public function init(string $host, int $robot, int $port = 6000, string $key = 'A2I8C'): void
     {
         $this->host     = $host;
@@ -132,6 +139,10 @@ class Xlz extends Common
         $this->key      = $key;
     }
     
+    public function setTimeout(int $sec): void
+    {
+        $this->timeout = $sec;
+    }
     
     public function setRobotQq(int $qq): void
     {
@@ -358,7 +369,7 @@ class Xlz extends Common
                 //  {"retcode":-2,"retmsg":"扫码完成，登录失败错误代码:-2","time":"1701101228"}
                 $data = [
                     'status' => 2,
-                    'msg'    => "扫码完成但已被风控，请使用其他协议",
+                    'msg'    => "扫码完成但已被风控，请使用新协议",
                 ];
             } elseif ($retcode === -4) {
                 //  {"retcode":-4,"retmsg":"查询二维码状态失败！错误代码 -4","time":"1722509284"}  （比如登录期间，QQ从框架中删除掉就会返回，应该就是QQ不存在框架中返回这个状态）
@@ -699,9 +710,10 @@ class Xlz extends Common
                     ];
                 } elseif ($arr['retcode'] === -1) {
                     // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
+                    // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
                     $data = [
                         'status' => -2,
-                        'msg'    => '发送数据包失败',
+                        'msg'    => '发送数据包失败，对方QQ不存在',
                     ];
                 } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
                     // {"retcode":1,"retmsg":"","time":"1714973481"}
@@ -719,7 +731,7 @@ class Xlz extends Common
                 } else {
                     $data = [
                         'status' => 2,
-                        'msg'    => "[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
+                        'msg'    => $json,
                     ];
                 }
             } else {
@@ -1215,6 +1227,6 @@ class Xlz extends Common
         
         $url = "http://{$this->host}:{$this->port}{$path}";
         
-        return $this->curl($url, post: json_encode($param));
+        return $this->curl($url, post: json_encode($param), timeout: $this->timeout);
     }
 }
