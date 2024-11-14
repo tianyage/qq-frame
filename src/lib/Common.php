@@ -22,18 +22,21 @@ class Common
                     'https://qzs.qq.com/qzone/v5/loginsucc.html?para=izone'
                 );                                         // 其实就是回调地址，对与错目前来说都一样，程序抓cookie的话也不需要回调（这个链接相当于获取cookie后跳转到登录成功页面的意思）
                 $params['pt_3rd_aid'] = 100384226;             // 这里控制（第三方）互联的appid，显示对应的互联名称和头像。100384226是QQ空间 100497308QQ音乐
+                $params['domain']     = '';
                 break;
             case 'qun':
                 // 群空间
-                $params['aid']  = 715030901;
-                $params['daid'] = 73;
-                $params['u1']   = urlencode('https://qun.qq.com/');
+                $params['aid']    = 715030901;
+                $params['daid']   = 73;
+                $params['u1']     = urlencode('https://qun.qq.com/');
+                $params['domain'] = 'qun.qq.com';
                 break;
             case 'vip':
                 // QQ会员
-                $params['aid']  = 8000201;
-                $params['daid'] = 18;
-                $params['u1']   = urlencode('https://vip.qq.com/loginsuccess.html');
+                $params['aid']    = 8000201;
+                $params['daid']   = 18;
+                $params['u1']     = urlencode('https://vip.qq.com/loginsuccess.html');
+                $params['domain'] = 'vip.qq.com';
                 break;
             case 'vipclub':
                 // https://ui.ptlogin2.qq.com/cgi-bin/login?hide_title_bar=1&style=9&no_verifyimg=1&link_target=blank&appid=8000212&target=top&daid=18&s_url=https%3A%2F%2Fclub.vip.qq.com%2Fapi%2Ftianxuan%2FexecAct%3Fg_tk%3D2145515061
@@ -41,16 +44,18 @@ class Common
                 // 极地白 气泡 https://ui.ptlogin2.qq.com/cgi-bin/login?hide_title_bar=1&style=9&no_verifyimg=1&link_target=blank&appid=8000212&target=top&daid=18&s_url=http%3A%2F%2Fzb.vip.qq.com%2Fv2%2Fpages%2FitemDetail%3Fappid%3D3%26itemid%3D2964%26_nav_titleclr%3D000000%26_nav_txtclr%3D000000
                 
                 // 还不知道这个是针对哪些业务
-                $params['aid']  = 8000212;
-                $params['daid'] = 18;
-                $params['u1']   = urlencode('https://vip.qq.com/loginsuccess.html');
+                $params['aid']    = 8000212;
+                $params['daid']   = 18;
+                $params['u1']     = urlencode('https://vip.qq.com/loginsuccess.html');
+                $params['domain'] = 'club.vip.qq.com';
                 break;
             case 'qinfo':
                 // https://ui.ptlogin2.qq.com/cgi-bin/login?style=9&appid=716040006&s_url=https%3A%2F%2Fqinfo.clt.qq.com%2Fqlevel%2Fsetting.html%23gc%3D795063954&low_login=0
                 
-                $params['aid']  = 716040006;
-                $params['daid'] = 0;
-                $params['u1']   = urlencode('https://qinfo.clt.qq.com/qlevel/setting.html#gc=795063954');
+                $params['aid']    = 716040006;
+                $params['daid']   = 0;
+                $params['u1']     = urlencode('https://qinfo.clt.qq.com/qlevel/setting.html#gc=795063954');
+                $params['domain'] = 'qinfo.clt.qq.com';
                 break;
             case 'ti':
                 // ti.qq.com
@@ -60,18 +65,21 @@ class Common
                 $params['daid'] = 338;
                 $params['u1']   = urlencode('https://ti.qq.com/qqlevel/index');
                 //                $params['u1'] = urlencode('https://ti.qq.com/friendship_auth/index.html?_wv=3&_bid=173');
+                $params['domain'] = 'ti.qq.com';
                 break;
             case 'wg':
                 // wegame
-                $params['aid']  = 1600001063;
-                $params['daid'] = 733;
-                $params['u1']   = urlencode('https://www.wegame.com.cn/middle/login/third_callback.html');
+                $params['aid']    = 1600001063;
+                $params['daid']   = 733;
+                $params['u1']     = urlencode('https://www.wegame.com.cn/middle/login/third_callback.html');
+                $params['domain'] = 'www.wegame.com.cn';
                 break;
             case 'connect':
                 // QQ互联 https://connect.qq.com/manage.html#/
-                $params['aid']  = 716027613;
-                $params['daid'] = 377;
-                $params['u1']   = urlencode('https://connect.qq.com/login_success.html&hide_close_icon=1');
+                $params['aid']    = 716027613;
+                $params['daid']   = 377;
+                $params['u1']     = urlencode('https://connect.qq.com/login_success.html&hide_close_icon=1');
+                $params['domain'] = 'connect.qq.com';
                 break;
             case 'music':
                 // QQ音乐
@@ -79,18 +87,21 @@ class Common
                 $params['daid']       = 383;
                 $params['u1']         = urlencode('https://graph.qq.com/oauth2.0/login_jump');
                 $params['pt_3rd_aid'] = 100497308;
+                $params['domain']     = 'y.qq.com';
                 break;
             case 'qzoneh5':
                 // 空间触屏版
-                $params['aid']  = 549000929;
-                $params['daid'] = 5;
-                $params['u1']   = urlencode('https://h5.qzone.qq.com/mqzone/profile');
+                $params['aid']    = 549000929;
+                $params['daid']   = 5;
+                $params['u1']     = urlencode('https://h5.qzone.qq.com/mqzone/profile');
+                $params['domain'] = 'h5.qzone.qq.com';
                 break;
             default:
                 // QQ空间PC
-                $params['aid']  = 549000912;
-                $params['daid'] = 5;
-                $params['u1']   = urlencode('https://qzs.qq.com/qzone/v5/loginsucc.html?para=izone');
+                $params['aid']    = 549000912;
+                $params['daid']   = 5;
+                $params['u1']     = urlencode('https://qzs.qq.com/qzone/v5/loginsucc.html?para=izone');
+                $params['domain'] = 'qzone.qq.com';
                 break;
         }
         

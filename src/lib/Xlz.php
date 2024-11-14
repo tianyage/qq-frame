@@ -260,7 +260,6 @@ class Xlz extends Common
         } else {
             $data = [
                 'status' => 2,
-                'qr'     => '',
                 'msg'    => $arr['retmsg'] ?? '删除错误',
             ];
         }
@@ -445,7 +444,7 @@ class Xlz extends Common
             if (isset($skey[1]) && isset($p_skey[1])) {
                 $data = [
                     'status'    => 1,
-                    'msg'       => 'cookie获取成功',
+                    'msg'       => $type . '的cookie获取成功',
                     'cookie'    => $cookie,
                     'skey'      => $skey[1],
                     'p_skey'    => $p_skey[1],

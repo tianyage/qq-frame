@@ -1,10 +1,12 @@
 <?php
 
+// napcat框架 https://doc.napneko.icu/develop/api
+
 declare(strict_types=1);
 
 namespace Tianyage\QqFrame\lib;
 
-class Qy extends Common
+class NapCat extends Common
 {
     
     /**
@@ -57,12 +59,12 @@ class Qy extends Common
         '好友事件_被好友删除'             => 100,
         '好友事件_签名变更'               => 101,
         '好友事件_昵称改变'               => 102,
-        '好友事件_某人撤回事件'           => 103,
-        '好友事件_有新好友'               => 104,
-        '好友事件_好友请求'               => 105,
+        '好友事件_某人撤回事件'           => 'notice.friend_recall',
+        '好友事件_有新好友'               => 'notice.friend_add',
+        '好友事件_好友请求'               => 'request.friend',
         '好友事件_对方同意了您的好友请求' => 106,
         '好友事件_对方拒绝了您的好友请求' => 107,
-        '好友事件_资料卡点赞'             => 108,
+        '好友事件_资料卡点赞'             => 'notice.notify.profile_like',
         '好友事件_签名点赞'               => 109,
         '好友事件_签名回复'               => 110,
         '好友事件_个性标签点赞'           => 111,
@@ -73,7 +75,7 @@ class Qy extends Common
         '好友事件_匿名提问_被提问'        => 116,
         '好友事件_匿名提问_被点赞'        => 117,
         '好友事件_匿名提问_被回复'        => 118,
-        '好友事件_输入状态'               => 119,
+        '好友事件_输入状态'               => 'notice.notify.input_status',
         '空间事件_与我相关'               => 29,
         
         '登录事件_电脑上线'             => 200,
@@ -92,10 +94,9 @@ class Qy extends Common
         '消息类型_临时会话_公众号'           => 129,
         '消息类型_临时会话_网页QQ咨询'       => 201,
         '消息类型_临时会话_好友申请验证消息' => 134,
-        '消息类型_好友通常消息'              => 166,
+        '消息类型_好友通常消息'              => 'message.private.friend',
         '消息类型_讨论组消息'                => 83,
     ];
-    
     
     /**
      * IP或域名
@@ -132,7 +133,7 @@ class Qy extends Common
      */
     private int $timeout = 10;
     
-    public function init(string $host, int $robot, int $port = 4000, string $key = 'A2I8C'): void
+    public function init(string $host, int $robot, int $port = 5000, string $key = 'A2I8C'): void
     {
         $this->host     = $host;
         $this->robot_qq = $robot;
@@ -176,22 +177,23 @@ class Qy extends Common
      * 获取登录二维码
      *
      * @param int|string $qq       要登录的QQ号
-     * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ,19鸿蒙HD,20LiteQQ
+     * @param int|string $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
      *
      * @return array
      */
-    public function qrLogin(int|string $qq, int|string $protocol = 15): array
+    public function qrLogin(int|string $qq, int|string $protocol = 5): array
     {
         // 将字符串协议改为正确的code
         if (is_string($protocol)) {
-            $protocol = match ($protocol) {
-                'watch2' => 15,
-                'apad'   => 2,
-                'ipad'   => 5,
-                'pc'     => 8,
-                // 'watch'
-                default  => 9,
-            };
+            if ($protocol === 'watch') {
+                $protocol = 5;
+            } elseif ($protocol === 'ipad') {
+                $protocol = 6;
+            } elseif ($protocol === 'pc') {
+                $protocol = 9;
+            } else {
+                $protocol = 5;
+            }
         }
         
         $param = [
@@ -199,8 +201,8 @@ class Qy extends Common
             'protocol' => $protocol,
         ];
         $json  = $this->query('/qrLogin', $param);
-        if ($json) {
-            $arr     = json_decode($json, true);
+        $arr   = json_decode($json, true);
+        if ($arr) {
             $retcode = $arr['retcode'];
             $retmsg  = $arr['retmsg'];
             if ($retcode === 0) {
@@ -208,6 +210,22 @@ class Qy extends Common
                     'status' => 1,
                     'qr'     => $arr['qr'],
                     'msg'    => '二维码获取成功',
+                ];
+            } elseif ($retcode === -103) {
+                // 已在执行登录任务
+                // 但是小栗子长时间没有主动query会二维码失效，但是如果时间太长的话就会检测不出来（依旧显示等待扫码），所以直接删除
+                $this->del();
+                $data = [
+                    'status' => 2,
+                    'msg'    => '二维码已失效',
+                ];
+            } elseif ($retcode === -104) {
+                // QQ[xxxx]当前状态无法再进行登录操作
+                // 例如失效 冻结之类的好像，需要先删除再拉取二维码
+                $this->del();
+                $data = [
+                    'status' => 2,
+                    'msg'    => '数据已重置，请重试',
                 ];
             } else {
                 $data = [
@@ -220,7 +238,31 @@ class Qy extends Common
             $data = [
                 'status' => 2,
                 'qr'     => '',
-                'msg'    => $this->port . '号服务器维护中，请稍后再试',
+                'msg'    => '拉取授权超时，请稍后重试',
+            ];
+        }
+        return $data;
+    }
+    
+    /**
+     * 删除QQ
+     *
+     * @return array
+     */
+    public function del(): array
+    {
+        $res = $this->query('/del');
+        $arr = json_decode($res, true);
+        if ($arr && ($arr['retcode'] === 0 || $arr['retcode'] === -126)) {
+            // 0成功 -126 qq不存在
+            $data = [
+                'status' => 1,
+                'msg'    => $this->robot_qq . '删除成功',
+            ];
+        } else {
+            $data = [
+                'status' => 2,
+                'msg'    => $arr['retmsg'] ?? '删除错误',
             ];
         }
         return $data;
@@ -267,56 +309,78 @@ class Qy extends Common
     {
         $json = $this->query('/qrQuery', ['qr_id' => $qr_id]);
         if ($json) {
-            $arr = json_decode($json, true);
-            // QY框架成功获取数据时返回code msg , 报错时（比如QQ不存在）是返回retcode retmsg
-            $retcode = $arr['code'] ?? $arr['retcode'];
-            $retmsg  = $arr['msg'] ?? $arr['retmsg'];
-            if ($retcode === 200) {
+            $arr     = json_decode($json, true);
+            $retcode = $arr['retcode'];
+            $retmsg  = $arr['retmsg'] ?: '无';
+            if ($retcode === 0) {
+                // {"retcode":0,"retmsg":"登录成功","time":"1679663947"}
                 $data = [
                     'status' => 1,
                     'msg'    => "{$this->robot_qq}登录成功",
                 ];
-            } elseif ($retcode === 54) {
+            } elseif ($retcode === 505) {
+                // {"retcode":505,"retmsg":"等待用户扫码...","time":"1679663879"}
+                $data = [
+                    'status' => 3,
+                    'msg'    => "等待扫码中",
+                ];
+            } elseif ($retcode === 504) {
+                // {"retcode":504,"retmsg":"扫码成功，请在手机上确认登录","time":"1679663929"}
+                $data = [
+                    'status' => 3,
+                    'msg'    => "扫码成功，请在手机上确认登录",
+                ];
+            } elseif ($retcode === 502) {
+                // 实测 pandaLocal 用户在QQ中点击拒绝按钮或右上角X关闭，会返回502，但retmsg是空的
+                if ($retmsg === '无') {
+                    $data = [
+                        'status' => 2,
+                        'msg'    => "您已拒绝了本次登录请求",
+                    ];
+                } else {
+                    // 设备网络不稳的或处于复杂网络环境
+                    $data = [
+                        'status' => 2,
+                        'msg'    => "网络异常，请尝试使用TimAPP来授权",
+                    ];
+                }
+            } elseif ($retcode === -109) {
                 $data = [
                     'status' => 2,
-                    'msg'    => "{$this->robot_qq}已主动取消了二维码登录",
+                    'msg'    => "已主动取消了二维码登录",
                 ];
-            } elseif ($retcode === -11) {
+            } elseif ($retcode === -108) {
                 $data = [
                     'status' => 4,
-                    'msg'    => "申请二维码的{$this->robot_qq}与实际扫码的QQ号不一致，登录失败",
+                    'msg'    => "实际扫码QQ与本次申请的QQ{$this->robot_qq}不一致，登录失败[{$retcode}]",
                 ];
-            } elseif ($retcode === 53) {
-                // {"code":53,"msg":"扫码成功,点击继续登录即可完成上线","qrcode_qq":"454701103"}
-                $data = [
-                    'status' => 3,
-                    'msg'    => "{$this->robot_qq}扫码成功 等待确认",
-                ];
-            } elseif ($retcode === 48) {
-                $data = [
-                    'status' => 3,
-                    'msg'    => "{$this->robot_qq}等待扫码",
-                ];
-            } elseif ($retcode === 404) {
+            } elseif ($retcode === -107 || $retcode === 49 || $retcode === 503) {
+                // {"retcode":49,"retmsg":"","time":"1722509933"}
                 $data = [
                     'status' => 2,
-                    'msg'    => "{$this->robot_qq}登录失败，QQ已不存在云端内",
+                    'msg'    => "二维码已超时，如需继续登录请重新获取",
                 ];
-            } elseif ($retcode === 0 && str_contains($retmsg, '登录成功')) {
-                // {"code":0,"msg":"确认登录成功！开始执行上线操作","qrcode_qq":"454701103"}
+            } elseif ($retcode === 3) {
+                //  {"retcode":3,"retmsg":"获取二维码状态失败","time":"1700825011"} （应该是框架QQ存在，但是已超时(连接断开)会返回这个状态，和下面的code-4相反）
                 $data = [
                     'status' => 3,
-                    'msg'    => "{$this->robot_qq}授权成功，开始执行登录上线操作",
+                    'msg'    => "获取二维码状态失败",
                 ];
-            } elseif ($retcode === 0 && !$retmsg) {
-                // 虽然返回了code0 但是成功登录的时候应该有retmsg，那就retmsg为空的时候算作等待扫码完成
+            } elseif ($retcode === -2) {
+                //  {"retcode":-2,"retmsg":"扫码完成，登录失败错误代码:-2","time":"1701101228"}
                 $data = [
-                    'status' => 3,
-                    'msg'    => "{$this->robot_qq}扫码成功 等待确认[2]",
+                    'status' => 2,
+                    'msg'    => "扫码完成但已被风控，请使用新协议",
+                ];
+            } elseif ($retcode === -4) {
+                //  {"retcode":-4,"retmsg":"查询二维码状态失败！错误代码 -4","time":"1722509284"}  （比如登录期间，QQ从框架中删除掉就会返回，应该就是QQ不存在框架中返回这个状态）
+                $data = [
+                    'status' => 2,
+                    'msg'    => "超时登录，如需继续登录请重新获取",
                 ];
             } else {
                 //                if (function_exists('trace')) {
-                //                    trace($json . PHP_EOL, 'qrQuery');
+                //                    trace($json . PHP_EOL, 'qrQuery_xlz');
                 //                }
                 
                 // 其他错误
@@ -330,31 +394,6 @@ class Qy extends Common
             $data = [
                 'status' => 3,
                 'msg'    => "服务器访问超时",
-            ];
-        }
-        
-        return $data;
-    }
-    
-    /**
-     * 删除QQ
-     *
-     * @return array
-     */
-    public function del(): array
-    {
-        $res = $this->query('/del');
-        $arr = json_decode($res, true);
-        if ($arr && ($arr['retcode'] === 200 || $arr['retcode'] === 404)) {
-            // 200成功 404 qq不存在
-            $data = [
-                'status' => 1,
-                'msg'    => $this->robot_qq . '删除成功',
-            ];
-        } else {
-            $data = [
-                'status' => 2,
-                'msg'    => $arr['retmsg'] ?? '删除错误',
             ];
         }
         return $data;
@@ -371,38 +410,23 @@ class Qy extends Common
      */
     public function getCookie(string $type, bool $cache = false): array
     {
-        // 不在此数组中的只能用登录网页来实时获取cookie
-        $cacheType = [
-            'qzoneh5',
-            'vip',
-            'pay',
-            'payh5',
-            'qun',
-        ];
-        
         $ret   = $this->getLoginParams($type);
         $param = [
-            'url'   => urldecode($ret['u1']),
-            'appid' => $ret['aid'],
-            'daid'  => $ret['daid'],
+            'domain' => $ret['domain'],
         ];
         
-        if ($cache && in_array($type, $cacheType)) {
-            $param['type'] = $type;
-        }
-        
-        $json = $this->query('/getCookie', $param);
+        $json = $this->query('/get_cookies', $param);
         $arr  = json_decode($json, true);
         if (!$json) {
             $data = [
                 'status' => -1,
                 'msg'    => 'cookie获取超时',
             ];
-        } elseif ($arr && $arr['retcode'] === 0) {
-            $cookie = $arr['data'];
-            preg_match('/skey=(.{10});/', $cookie, $skey);
-            preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
-            preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
+        } elseif ($arr && $arr['retcode'] === 0 && $arr['status'] === 'ok') {
+            $cookie = $arr['data']['cookies'];
+            preg_match('/skey=(.{10})/', $cookie, $skey);
+            preg_match("/p_skey=(.{44})/", $cookie, $p_skey);
+            preg_match("/pt4_token=(.{44})/", $cookie, $pt4_token);
             
             if (isset($skey[1]) && isset($p_skey[1])) {
                 $data = [
@@ -444,8 +468,7 @@ class Qy extends Common
     }
     
     /**
-     * 名片赞
-     * (非好友情况下进行点赞时返回成功，但不一定真正点上了，对方开启陌生人点赞时才能点上(手Q默认关闭陌生人点赞))
+     * napcat框架直接调用cardlike2就好了
      *
      * @param string|int $toqq 对方QQ
      * @param int        $num  点赞次数 默认1
@@ -454,79 +477,7 @@ class Qy extends Common
      */
     public function cardLike(string|int $toqq, int $num = 1): string
     {
-        // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
-        $num = max($num, 1); // 最少点赞一次
-        
-        //        $json    = '';
-        $succ = 0; // 点赞成功次数的统计
-        $err  = 0; // 点赞失败
-        //        $timeout = 0; // 点赞超时
-        $errmsg = ''; // 点赞错误信息
-        
-        for ($i = 1; $i <= $num; $i++) {
-            // 最多执行20次
-            if ($i > 20) {
-                break;
-            }
-            
-            // 判断点赞成功与失败
-            $json = $this->query('/cardLike', [
-                'toqq' => $toqq,
-            ]);
-            if ($json) {
-                $arr = json_decode($json, true);
-                if (isset($arr['retcode'])) {
-                    // 成功
-                    if ($arr['retcode'] === 0) {
-                        $succ++;
-                    } elseif ($arr['retcode'] === 1) {
-                        $err++;
-                        $errmsg = "TA不是你的好友";
-                        break; // 点赞失败的话就停止循环
-                    } elseif ($arr['retcode'] === 404) {
-                        $err++;
-                        $errmsg = "自动更新已掉线";
-                        break; //点赞失败的话就停止循环
-                    } else {
-                        $err++;
-                        $errmsg = ($arr['retmsg'] ?: "手表协议风控中") . "[{$arr['retcode']}]";
-                        break; // 点赞失败后直接跳出循环
-                    }
-                } else {
-                    if (function_exists('trace')) {
-                        trace($json . PHP_EOL, 'cardLike_qy');
-                    }
-                    
-                    $err++;
-                    $errmsg = "异常数据";
-                    break; // 点赞失败的话就停止循环
-                }
-            } else {
-                $err++;
-                //                $timeout++;
-                $errmsg = '点赞超时';
-            }
-            
-            // 连续点赞做个延迟 0.02s
-            if ($num > 2 && $num !== $i) {
-                usleep(mt_rand(20000, 30000));  // 微秒
-            }
-        }
-        
-        // 总结本次点赞信息
-        if ($num > 1) {
-            if ($err) {
-                $msg = "名片点赞{$num}次，其中{$succ}次成功（{$errmsg}）";
-            } else {
-                $msg = "名片点赞成功{$num}次";
-            }
-        } elseif ($succ) {
-            $msg = '名片点赞成功1次';
-        } else {
-            $msg = "名片点赞失败1次：{$errmsg}";
-        }
-        
-        return $msg;
+        return $this->cardLike2($toqq, $num);
     }
     
     /**
@@ -546,34 +497,29 @@ class Qy extends Common
         $num = max($num, 1); // 最少1赞
         $num = min($num, 20); // 最多20赞
         
-        // 根据数量使用不同的接口
-        if ($num > 1) {
-            $mod = '/cardLike2';
-        } else {
-            $mod = '/cardLike';
-        }
-        $json = $this->query($mod, [
-            'toqq' => $toqq,
-            'num'  => $num,
-            'type' => $type,
+        $json = $this->query('/send_like', [
+            'user_id' => $toqq,
+            'times'   => $num,
         ]);
         
-        // {"retcode":51,"retmsg":"每天最多给她点20个赞哦。","msg":"给2362836002点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D000077080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D0000470A0A000112D1419A0822427180E530334623E6AF8FE5A4A9E69C80E5A49AE7BB99E5A5B9E782B93230E4B8AAE8B59EE593A6E380820B13000000008CD604222C3D000C4CFC150B8C980CA80C"}
+        // {"status":"failed","retcode":200,"data":null,"message":"点赞失败 今日同一好友点赞数已达上限","wording":"点赞失败 今日同一好友点赞数已达上限","echo":null}
+        // {"status":"failed","retcode":200,"data":null,"message":"点赞失败 禁止给自己点赞","wording":"点赞失败 禁止给自己点赞","echo":null}
+        //  部分的非好友QQ号会提示转换失败
+        // {"status":"failed","retcode":200,"data":null,"message":"点赞失败 账号转换失败","wording":"点赞失败 账号转换失败","echo":null}
+        // 单次最高20，但是可以多次20来叠加到50上限
+        // {"status":"failed","retcode":200,"data":null,"message":"点赞失败 点赞数无效","wording":"点赞失败 点赞数无效","echo":null}
         
-        // {"retcode":1,"retmsg":"not friend","msg":"给2362836001点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D00005E080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D00002E0A0A00011257CD76C722427180E53001460A6E6F7420667269656E640B13000000008CD604212C3D000C4CFC150B8C980CA80C"}
+        // {"status":"ok","retcode":0,"data":null,"message":"","wording":"","echo":null}
         
         if ($json) {
             $arr = json_decode($json, true);
             // 成功
             if ($arr['retcode'] === 0) {
                 $msg = "名片点赞{$num}次成功";
-            } elseif ($arr['retcode'] === 1) {
+            } elseif ($arr['message'] === '点赞失败 账号转换失败') {
                 $msg = "名片点赞{$num}次失败：TA不是你的好友";
-            } elseif ($arr['retcode'] === 404) {
-                // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
-                $msg = "名片点赞{$num}次失败：自动更新已掉线";
             } else {
-                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+                $retmsg = $arr['message'] ?: "未知的点赞错误";
                 $msg    = "名片点赞{$num}次失败：{$retmsg}";
             }
         } else {
@@ -597,10 +543,8 @@ class Qy extends Common
     public function uploadFriendPic(int $toqq, string $file_url, bool $isflash = false, string $type = 'url'): string
     {
         $param = [
-            'toqq'     => $toqq,
-            'pic_type' => $type,
-            'pic'      => $file_url,
-            'is_flash' => $isflash,
+            'toqq' => $toqq,
+            'pic'  => $file_url,
         ];
         $ret   = $this->query('/uploadFriendPic', $param);
         
@@ -670,6 +614,20 @@ class Qy extends Common
                         'status' => 3,
                         'msg'    => '对方不是你的好友',
                     ];
+                } elseif ($arr['retcode'] === -1) {
+                    // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
+                    // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
+                    $data = [
+                        'status' => -2,
+                        'msg'    => '发送数据包失败，对方QQ不存在',
+                    ];
+                } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
+                    // {"retcode":1,"retmsg":"","time":"1714973481"}
+                    $data = [
+                        'status' => 1,
+                        'msg'    => '发送完成，但消息疑似被屏蔽',
+                        'time'   => $arr['time'],
+                    ];
                 } elseif ($arr['retcode'] === 405) {
                     // [405]该框架QQ未登录
                     $data = [
@@ -679,7 +637,7 @@ class Qy extends Common
                 } else {
                     $data = [
                         'status' => 2,
-                        'msg'    => "[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
+                        'msg'    => $json,
                     ];
                 }
             } else {
@@ -713,7 +671,6 @@ class Qy extends Common
             'json' => $base64_json,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
-        // {"retcode":16,"retmsg":"发送失败，请先添加对方为好友","time":"1696957329"}
         return $this->query('/sendFriendMsgJson', $param);
     }
     
@@ -751,7 +708,7 @@ class Qy extends Common
             } elseif ($arr['retcode'] === 120) {
                 $data = [
                     'status' => 2,
-                    'msg'    => '发送失败，群内被禁言',
+                    'msg'    => '发送失败，群内你已被禁言',
                 ];
             } else {
                 $data = [
@@ -787,7 +744,6 @@ class Qy extends Common
         return $this->query('/sendGroupMsgJson', $param);
     }
     
-    
     /**
      * 获取框架所有QQ
      *
@@ -801,22 +757,29 @@ class Qy extends Common
     
     /**
      * 好友请求事件处理
-     * *
-     * * @param int $toqq 对方QQ
-     * * @param int $seq 消息Seq
-     * * @param int $oper_type 1同意 2拒绝
-     * * @param bool $pack QY不支持此参数
-     * *
-     * * @return string 不会有返回值
+     *
+     * @param int  $toqq      对方QQ
+     * @param int  $seq       消息Seq
+     * @param int  $oper_type 1同意 2拒绝
+     * @param bool $pack      是否需要自己发包 ，否为使用框架自身API (自己发包只能同意请求)
+     *
+     * @return string 不会有返回值
      */
     public function friendHandle(int $toqq, int $seq, int $oper_type, bool $pack = false): string
     {
-        $param = [
-            'toqq'      => $toqq,
-            'seq'       => $seq,
-            'oper_type' => $oper_type,
-        ];
-        return $this->query('/friendHandle', $param);
+        if ($pack) {
+            $param = [
+                'toqq' => $toqq,
+            ];
+            return $this->query('/agreeFriend', $param);
+        } else {
+            $param = [
+                'toqq'      => $toqq,
+                'seq'       => $seq,
+                'oper_type' => $oper_type,
+            ];
+            return $this->query('/friendHandle', $param);
+        }
     }
     
     /**
@@ -904,13 +867,12 @@ class Qy extends Common
         return $this->query('/withdraw', $param);
     }
     
-    
     /**
      * 添加QQ
      *
      * @param int|string $qq       QQ号
      * @param string     $pwd      密码
-     * @param int        $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ,19鸿蒙HD,20LiteQQ
+     * @param int        $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
      *
      * @return string
      */
@@ -954,16 +916,16 @@ class Qy extends Common
         return $this->query('/logout', $param);
     }
     
+    
     /**
      * 领取红包
-     * (手表不支持领红包)
      *
      * @param int|string $toqq      红包发送人QQ
      * @param int|string $group     红包所在群号
      * @param string     $redpack   红包代码
      * @param string     $audiohash 语音包匹配的hash ，文字为恭喜发财
      *
-     * @return string
+     * @return string 一段json
      * {"retcode":"0","retmsg":"ok","skey":"v09dfa57922653004a23210948310ad3","skey_expire":"1500","trans_seq":"0","recv_object":{"amount":"1"},"send_object":{"bus_type":"2","channel":"65536","feedsid":"","grab_uin_list":"","hb_idiom":"","idiom_alpha":"","idiom_seq":"","is_first_grap":"1","is_owner":"0","listid":"10000466012310181400115814156600","poem_rule":"","rareword_explain_url":"https://h5.qianbao.qq.com/rareWordRedPacket?_wwv=516&_wv=16781312&rareWord=%E5%BA%8A%E5%89%8D%E6%98%8E%E6%9C%88%E5%85%89%E7%96%91%E6%98%AF%E5%9C%B0%E4%B8%8A%E9%9C%9C","send_name":"simon??","send_tinyid":"","send_uin":"454701103","show_pron":"","type":"1","wishing":"床前明月光疑是地上霜"},"state":"0","need_realname_flag":"0"}
      */
     public function redpack(int|string $toqq, int|string $group, string $redpack, string $audiohash = ''): string
@@ -1040,15 +1002,6 @@ class Qy extends Common
             'toqq'   => $toqq,
             'answer' => $answer,
         ];
-        
-        // {"retcode":0,"retmsg":"添加好友成功","time":"1702033257"}
-        // {"retcode":1,"retmsg":"发送添加请求成功，等待验证通过","time":"1702033226"}
-        // {"retcode":2,"retmsg":"对方拒绝被任何人添加为好友","time":"1702251001"}
-        // {"retcode":3,"retmsg":"答案回答错误，问题文本：解封密码『8』","time":"1702289243"}
-        // {"retcode":4,"retmsg":"发送添加请求成功，等待验证通过，问题文本：你是谁？","time":"1702032430"}
-        // {"retcode":4,"retmsg":"发送添加请求成功，等待验证通过，问题文本：备注什么|你多大了？|加我有什么事吗","time":"1702382499"}
-        // {"retcode":101,"retmsg":"对方已为你的好友","time":"1702033288"}
-        // {"retcode":406,"retmsg":"添加好友前置条件为满足，请稍后再试！","time":"1702289963"}
         return $this->query('/addFriend', $param);
     }
     

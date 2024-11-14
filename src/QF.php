@@ -3,13 +3,16 @@
 namespace Tianyage\QqFrame;
 
 use Tianyage\QqFrame\lib\Common;
+use Tianyage\QqFrame\lib\Dream;
+use Tianyage\QqFrame\lib\NapCat;
+use Tianyage\QqFrame\lib\EBotNT;
 use Tianyage\QqFrame\lib\Qy as qy;
 use Tianyage\QqFrame\lib\Xlz as xlz;
 
 class QF extends Common
 {
     
-    public qy|xlz $sdk;
+    public qy|xlz|NapCat|EBotNT|Dream $sdk;
     
     /**
      *
@@ -17,12 +20,18 @@ class QF extends Common
      * @param int    $robot 框架QQ
      * @param int    $port  api端口
      *
-     * @return qy|xlz
+     * @return qy|xlz|NapCat|EBotNT|Dream
      */
-    final public function init(string $host, int $robot, int $port): qy|xlz
+    final public function init(string $host, int $robot, int $port): qy|xlz|NapCat|EBotNT|Dream
     {
         if (str_starts_with($port, 4)) {
             $this->sdk = new qy();
+        } elseif (str_starts_with($port, 5)) {
+            $this->sdk = new NapCat();
+        } elseif (str_starts_with($port, 8)) {
+            $this->sdk = new EBotNT();
+        } elseif (str_starts_with($port, 9)) {
+            $this->sdk = new Dream();
         } else {
             $this->sdk = new xlz();
         }
