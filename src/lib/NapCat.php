@@ -439,7 +439,7 @@ class NapCat extends Common
                     'pt4_token' => $pt4_token[1] ?? '',
                 ];
             } else {
-                throw new \Exception('cookie获取成功但解析失败');
+                throw new \Exception($this->robot_qq . ':cookie获取成功但解析失败');
             }
         } else {
             $data = [
