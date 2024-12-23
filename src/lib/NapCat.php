@@ -85,9 +85,7 @@ class NapCat extends Common
         '登录事件_其他应用登录验证请求' => 204,
         '框架事件_登录成功'             => 31,
         '框架事件_登录失败'             => 38,
-    ];
-    
-    public array $MSG_TYPE_CODE = [
+        
         '消息类型_临时会话'                  => 141,
         '消息类型_临时会话_群临时'           => 0,
         '消息类型_临时会话_讨论组临时'       => 1,
@@ -97,6 +95,7 @@ class NapCat extends Common
         '消息类型_好友通常消息'              => 'message.private.friend',
         '消息类型_讨论组消息'                => 83,
     ];
+    
     
     /**
      * IP或域名
@@ -133,7 +132,7 @@ class NapCat extends Common
      */
     private int $timeout = 10;
     
-    public function init(string $host, int $robot, int $port = 5000, string $key = 'A2I8C'): void
+    public function init(string $host, int $robot, int $port = 5000, string $key = 'testToken'): void
     {
         $this->host     = $host;
         $this->robot_qq = $robot;
@@ -514,10 +513,8 @@ class NapCat extends Common
         if ($json) {
             $arr = json_decode($json, true);
             // 成功
-            if ($arr['retcode'] === 0) {
+            if ($arr['status'] === 'ok') {
                 $msg = "名片点赞{$num}次成功";
-            } elseif ($arr['message'] === '点赞失败 账号转换失败') {
-                $msg = "名片点赞{$num}次失败：TA不是你的好友";
             } else {
                 $retmsg = $arr['message'] ?: "未知的点赞错误";
                 $msg    = "名片点赞{$num}次失败：{$retmsg}";
@@ -595,49 +592,24 @@ class NapCat extends Common
     public function sendFriendMsg(int|string $toqq, string $content): array
     {
         $param = [
-            'toqq'    => $toqq,
-            'content' => $content,
+            'user_id' => $toqq,
+            'message' => $content,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
-        $json = $this->query('/sendFriendMsg', $param);
+        $json = $this->query('/send_private_msg', $param);
         if ($json) {
             $arr = json_decode($json, true);
             if ($arr) {
-                if ($arr['retcode'] === 0) {
+                if ($arr['status'] === 'ok') {
                     $data = [
-                        'status' => 1,
-                        'msg'    => '发送成功',
-                        'time'   => $arr['time'],
-                    ];
-                } elseif ($arr['retcode'] === 16) {
-                    $data = [
-                        'status' => 3,
-                        'msg'    => '对方不是你的好友',
-                    ];
-                } elseif ($arr['retcode'] === -1) {
-                    // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
-                    // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
-                    $data = [
-                        'status' => -2,
-                        'msg'    => '发送数据包失败，对方QQ不存在',
-                    ];
-                } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
-                    // {"retcode":1,"retmsg":"","time":"1714973481"}
-                    $data = [
-                        'status' => 1,
-                        'msg'    => '发送完成，但消息疑似被屏蔽',
-                        'time'   => $arr['time'],
-                    ];
-                } elseif ($arr['retcode'] === 405) {
-                    // [405]该框架QQ未登录
-                    $data = [
-                        'status' => -1,
-                        'msg'    => 'QQ目前离线中',
+                        'status'     => 1,
+                        'msg'        => '发送成功',
+                        'message_id' => $arr['data']['message_id'],
                     ];
                 } else {
                     $data = [
                         'status' => 2,
-                        'msg'    => $json,
+                        'msg'    => $arr['message'],
                     ];
                 }
             } else {
@@ -685,13 +657,13 @@ class NapCat extends Common
     public function sendGroupMsg(int $group_id, string $content): array
     {
         $param = [
-            'group'   => $group_id,
-            'content' => $content,
+            'group_id' => $group_id,
+            'message'  => $content,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
         // {"retcode":110,"retmsg":"发送失败，你已被移出该群，请重新加群。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
         // {"retcode":120,"retmsg":"你已被禁言，消息无法发送。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
-        $json = $this->query('/sendGroupMsg', $param);
+        $json = $this->query('/send_group_msg', $param);
         $arr  = json_decode($json, true);
         if ($arr) {
             if ($arr['retcode'] === 0) {
@@ -1123,16 +1095,14 @@ class NapCat extends Common
      */
     private function query(string $path, array $param = []): string
     {
-        // 追加框架QQ
-        $param['qq'] = $param['qq'] ?? $this->robot_qq;
-        if (isset($param['qq']) && $param['qq'] === 0) {
-            die('qq错误：' . $param['qq']);
-        }
-        // 追加key
-        $param['key'] = $this->key;
+        //        // 追加框架QQ
+        //        $param['qq'] = $param['qq'] ?? $this->robot_qq;
+        //        if (isset($param['qq']) && $param['qq'] === 0) {
+        //            die('qq错误：' . $param['qq']);
+        //        }
         
         $url = "http://{$this->host}:{$this->port}{$path}";
         
-        return $this->curl($url, post: json_encode($param), timeout: $this->timeout);
+        return $this->curl($url, post: json_encode($param), header: ["Authorization: Bearer {$this->key}"], timeout: $this->timeout);
     }
 }

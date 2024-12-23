@@ -601,17 +601,21 @@ class Xlz extends Common
         
         if ($json) {
             $arr = json_decode($json, true);
-            // 成功
-            if ($arr['retcode'] === 0) {
-                $msg = "名片点赞{$num}次成功";
-            } elseif ($arr['retcode'] === 1) {
-                $msg = "名片点赞{$num}次失败：TA不是你的好友";
-            } elseif ($arr['retcode'] === 404) {
-                // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
-                $msg = "名片点赞{$num}次失败：自动更新已掉线";
-            } else {
-                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
-                $msg    = "名片点赞{$num}次失败：{$retmsg}";
+            try {
+                // 成功
+                if ($arr['retcode'] === 0) {
+                    $msg = "名片点赞{$num}次成功";
+                } elseif ($arr['retcode'] === 1) {
+                    $msg = "名片点赞{$num}次失败：TA不是你的好友";
+                } elseif ($arr['retcode'] === 404) {
+                    // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
+                    $msg = "名片点赞{$num}次失败：自动更新已掉线";
+                } else {
+                    $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+                    $msg    = "名片点赞{$num}次失败：{$retmsg}";
+                }
+            } catch (\Exception $e) {
+                $msg = "名片点赞提交失败：{$json}";
             }
         } else {
             $msg = "名片点赞{$num}次超时";

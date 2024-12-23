@@ -325,9 +325,13 @@ class Dream extends Common
             ];
         } elseif ($arr && $arr['retcode'] === 0) {
             $cookie = $arr['data'];
-            preg_match('/skey=(.{10})/', $cookie, $skey);
-            preg_match("/p_skey=(.{44})/", $cookie, $p_skey);
-            preg_match("/pt4_token=(.{44})/", $cookie, $pt4_token);
+            preg_match('/skey=(.{10});/', $cookie, $skey);
+            if ($type === 'qzone' || $type === 'qzoneh5') {
+                preg_match("/p_skey=(.{44});/", $cookie, $p_skey);
+            } else {
+                preg_match("/p_skey2=(.{44});/", $cookie, $p_skey);
+            }
+            preg_match("/pt4_token=(.{44});/", $cookie, $pt4_token);
             
             if (isset($skey[1]) && isset($p_skey[1])) {
                 $data = [
@@ -340,7 +344,12 @@ class Dream extends Common
                     'pt4_token' => $pt4_token[1] ?? '',
                 ];
             } else {
-                throw new \Exception($this->robot_qq . ':cookie获取成功但解析失败');
+                // dr框架经常出这个问题，就是在线但是获取不到Cookie，需要框架里重新登录才行
+                $data = [
+                    'status' => 2,
+                    'msg'    => 'cookie获取失败',
+                ];
+                //                throw new \Exception("{$this->robot_qq}cookie解析{$type}失败{$json}");
             }
         } else {
             $data = [
