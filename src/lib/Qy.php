@@ -83,9 +83,7 @@ class Qy extends Common
         '登录事件_其他应用登录验证请求' => 204,
         '框架事件_登录成功'             => 31,
         '框架事件_登录失败'             => 38,
-    ];
-    
-    public array $MSG_TYPE_CODE = [
+        
         '消息类型_临时会话'                  => 141,
         '消息类型_临时会话_群临时'           => 0,
         '消息类型_临时会话_讨论组临时'       => 1,
@@ -358,6 +356,42 @@ class Qy extends Common
             ];
         }
         return $data;
+    }
+    
+    public function getClientKey(): array
+    {
+        $param = [
+        ];
+        $json  = $this->query('/getClientKey', $param);
+        if ($json) {
+            $arr = json_decode($json, true);
+            if ($arr['code'] === 0) {
+                $str = $arr['data']['Clientkey'];
+                if (str_starts_with($str, '{')) {
+                    $sub_arr = json_decode($str, true);
+                    return [
+                        'status' => 2,
+                        'msg'    => '获取clientkey失败：' . ($sub_arr['retmsg'] ?? $str),
+                    ];
+                } else {
+                    return [
+                        'status' => 1,
+                        'msg'    => '成功',
+                        'data'   => $arr['data']['Clientkey'],
+                    ];
+                }
+            } else {
+                return [
+                    'status' => 2,
+                    'msg'    => '获取clientkey失败',
+                ];
+            }
+        } else {
+            return [
+                'status' => -1,
+                'msg'    => '访问超时',
+            ];
+        }
     }
     
     /**
@@ -801,18 +835,20 @@ class Qy extends Common
     
     /**
      * 好友请求事件处理
-     * *
-     * * @param int $toqq 对方QQ
-     * * @param int $seq 消息Seq
-     * * @param int $oper_type 1同意 2拒绝
-     * * @param bool $pack QY不支持此参数
-     * *
-     * * @return string 不会有返回值
+     *
+     * @param int  $toqq      对方QQ
+     * @param int  $req       消息Req
+     * @param int  $seq       消息Seq
+     * @param int  $oper_type 1同意 2拒绝
+     * @param bool $pack      是否需要自己发包 ，否为使用框架自身API (自己发包只能同意请求)
+     *
+     * @return string 不会有返回值
      */
-    public function friendHandle(int $toqq, int $seq, int $oper_type, bool $pack = false): string
+    public function friendHandle(int $toqq, int $req, int $seq, int $oper_type, bool $pack = false): string
     {
         $param = [
             'toqq'      => $toqq,
+            'req'       => $req,
             'seq'       => $seq,
             'oper_type' => $oper_type,
         ];
@@ -1181,5 +1217,15 @@ class Qy extends Common
         $url = "http://{$this->host}:{$this->port}{$path}";
         
         return $this->curl($url, post: json_encode($param), timeout: $this->timeout);
+    }
+    
+    /**
+     * 获取当前类名（包含命名空间）
+     *
+     * @return string
+     */
+    public function getClassName(): string
+    {
+        return __CLASS__;
     }
 }

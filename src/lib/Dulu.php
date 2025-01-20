@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tianyage\QqFrame\lib;
 
-class EBotNT extends Common
+class Dulu extends Common
 {
     
     /**
@@ -12,86 +12,49 @@ class EBotNT extends Common
      *
      */
     public array $EVENT_TYPE_CODE = [
-        '群事件_我被邀请加入群'       => 1,
-        '群事件_某人加入了群'         => 2,
-        '群事件_某人申请加群'         => 3,
-        '群事件_群被解散'             => 4,
-        '群事件_某人退出了群'         => 5,
-        '群事件_某人被踢出群'         => 6,
-        '群事件_某人被禁言'           => 7,
-        '群事件_某人撤回事件'         => 8,
-        '群事件_某人被取消管理'       => 9,
-        '群事件_某人被赋予管理'       => 10,
-        '群事件_开启全员禁言'         => 11,
-        '群事件_关闭全员禁言'         => 12,
-        '群事件_开启匿名聊天'         => 13,
-        '群事件_关闭匿名聊天'         => 14,
-        '群事件_开启坦白说'           => 15,
-        '群事件_关闭坦白说'           => 16,
-        '群事件_允许群临时会话'       => 17,
-        '群事件_禁止群临时会话'       => 18,
-        '群事件_允许发起新的群聊'     => 19,
-        '群事件_禁止发起新的群聊'     => 20,
-        '群事件_允许上传群文件'       => 21,
-        '群事件_禁止上传群文件'       => 22,
-        '群事件_允许上传相册'         => 23,
-        '群事件_禁止上传相册'         => 24,
-        '群事件_某人被邀请入群'       => 25,
-        '群事件_展示成员群头衔'       => 26,
-        '群事件_隐藏成员群头衔'       => 27,
-        '群事件_某人被解除禁言'       => 28,
-        '群事件_群名变更'             => 32,
-        '群事件_系统提示'             => 33,
-        '群事件_群头像事件'           => 34,
-        '群事件_入场特效'             => 35,
-        '群事件_修改群名片'           => 36,
-        '群事件_群被转让'             => 37,
-        '群事件_匿名被禁言'           => 40,
-        '群事件_匿名被解除禁言'       => 41,
-        '群事件_某人的加群申请被拒绝' => 42,
-        '群事件_展示群互动标识'       => 43,
-        '群事件_隐藏群互动标识'       => 44,
-        '群事件_展示群成员等级'       => 45,
-        '群事件_隐藏群成员等级'       => 46,
+        //  （手表协议收不到此事件）
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":908777454,"主动QQ":2071267038,"被动QQ":908777454,"来源群号":1058425105,"消息内容":"{\"app\":\"com.tencent.qun.invite\",\"config\":{\"autosize\":0,\"ctime\":1737319649,\"round\":1,\"token\":\"5cb83539cd54636be3ec36b08bcbc8d3\",\"type\":\"normal\"},\"meta\":{\"news\":{\"desc\":\"邀请你加入群聊“刷步数交流”，进入可查看详情。\",\"jumpUrl\":\"mqqapi:\/\/group\/invite_join?src_type=internal&version=1&groupcode=1058425105&msgseq=1737319649826551&groupname=%e5%88%b7%e6%ad%a5%e6%95%b0%e4%ba%a4%e6%b5%81&senderuin=2071267038&receiveruin=908777454\",\"preview\":\"https:\/\/p.qlogo.cn\/gh\/1058425105\/1058425105\/?t=1737319649\",\"tag\":\"邀请加群\",\"tagIcon\":\"https:\/\/downv6.qq.com\/innovate\/group_ark_icon.png\",\"title\":\"邀请你加入群聊\"}},\"prompt\":\"邀请加群\",\"ver\":\"1.0.0.31\",\"view\":\"news\"}\n","消息类型":2002,"消息子类型":3,"消息Req":1737319649826551,"消息Seq":22656,"消息Random":1724344919,"消息时间戳":1737319649}}
+        '群事件_我被邀请加入群' => "2002.3",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":2783550142,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\uD83D\\uDEF5\\uD83D\\uDEF4\\uD83D\\uDEB2\\uD83D\\uDE9C\\u26DF\\uD83D\\uDE9B\\uD83D\\uDE9A\\uD83D\\uDE99\\uD83D\\uDE98\\uD83D\\uDE97\\uD83D\\uDE96\\uD83D\\uDE95\\uD83D\\uDE94\\uD83D\\uDE93\\uD83D\\uDE92(454701103)同意了\\u1D50\\u1DBB機器人\\uD83D\\uDC4D\\u2777(2783550142)加入群聊","消息类型":3003,"消息子类型":0,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_某人加入了群'   => "3003.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":2783550142,"被动QQ":0,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\u1D50\\u1DBB機器人\\uD83D\\uDC4D\\u2777(2783550142)申请加入群聊，验证消息：你好，提示：该账号存在风险，请谨慎操作","消息类型":3014,"消息子类型":3,"消息Req":1737317491484369,"消息Seq":54350,"消息Random":0,"消息时间戳":1737317491}}
+        '群事件_某人申请加群'   => "3014.3",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":2783550142,"被动QQ":0,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\u1D50\\u1DBB機器人\\uD83D\\uDC4D\\u2777(2783550142)退出了群聊","消息类型":3006,"消息子类型":0,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_某人退出了群'   => "3006.0",
+        // 看不出谁踢的
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":2783550142,"被动QQ":0,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\u1D50\\u1DBB機器人\\uD83D\\uDC4D\\u2777(2783550142)被移出群聊","消息类型":3007,"消息子类型":0,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_某人被踢出群'   => "3007.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":2088815608,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\u1D50\\u1DBB機器人\\uD83D\\uDC4D\\u2776(2088815608)被\\uD83D\\uDEF5\\uD83D\\uDEF4\\uD83D\\uDEB2\\uD83D\\uDE9C\\u26DF\\uD83D\\uDE9B\\uD83D\\uDE9A\\uD83D\\uDE99\\uD83D\\uDE98\\uD83D\\uDE97\\uD83D\\uDE96\\uD83D\\uDE95\\uD83D\\uDE94\\uD83D\\uDE93\\uD83D\\uDE92(454701103)禁言600秒","消息类型":3012,"消息子类型":1,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_某人被禁言'     => "3012.1",
+        // 主动Q撤回被动Q
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":454701103,"来源群号":214305852,"消息内容":"测试","消息类型":3010,"消息子类型":1,"消息Req":0,"消息Seq":3463,"消息Random":1487285493,"消息时间戳":1737315646}}
+        '群事件_某人撤回事件'   => "3010.1",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":2071267038,"被动QQ":0,"来源群号":214305852,"消息内容":"微博互推(214305852) => 步数助手 \\u2776(2071267038)失去了管理员身份","消息类型":3008,"消息子类型":0,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_某人被取消管理' => "3008.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":2071267038,"被动QQ":0,"来源群号":214305852,"消息内容":"微博互推(214305852) => 步数助手 \\u2776(2071267038)获得了管理员身份","消息类型":3008,"消息子类型":1,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_某人被赋予管理' => "3008.1",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":0,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\uD83D\\uDEF5\\uD83D\\uDEF4\\uD83D\\uDEB2\\uD83D\\uDE9C\\u26DF\\uD83D\\uDE9B\\uD83D\\uDE9A\\uD83D\\uDE99\\uD83D\\uDE98\\uD83D\\uDE97\\uD83D\\uDE96\\uD83D\\uDE95\\uD83D\\uDE94\\uD83D\\uDE93\\uD83D\\uDE92(454701103)开启了全体禁言","消息类型":3011,"消息子类型":1,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_开启全员禁言'   => "3011.1",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":0,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\uD83D\\uDEF5\\uD83D\\uDEF4\\uD83D\\uDEB2\\uD83D\\uDE9C\\u26DF\\uD83D\\uDE9B\\uD83D\\uDE9A\\uD83D\\uDE99\\uD83D\\uDE98\\uD83D\\uDE97\\uD83D\\uDE96\\uD83D\\uDE95\\uD83D\\uDE94\\uD83D\\uDE93\\uD83D\\uDE92(454701103)关闭了全体禁言","消息类型":3011,"消息子类型":0,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_关闭全员禁言'   => "3011.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":2783550142,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\uD83D\\uDEF5\\uD83D\\uDEF4\\uD83D\\uDEB2\\uD83D\\uDE9C\\u26DF\\uD83D\\uDE9B\\uD83D\\uDE9A\\uD83D\\uDE99\\uD83D\\uDE98\\uD83D\\uDE97\\uD83D\\uDE96\\uD83D\\uDE95\\uD83D\\uDE94\\uD83D\\uDE93\\uD83D\\uDE92(454701103)邀请了\\u1D50\\u1DBB機器人\\uD83D\\uDC4D\\u2777(2783550142)加入群聊","消息类型":3004,"消息子类型":0,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_某人被邀请入群' => "3004.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":2088815608,"来源群号":214305852,"消息内容":"微博互推(214305852) => \\u1D50\\u1DBB機器人\\uD83D\\uDC4D\\u2776(2088815608)被\\uD83D\\uDEF5\\uD83D\\uDEF4\\uD83D\\uDEB2\\uD83D\\uDE9C\\u26DF\\uD83D\\uDE9B\\uD83D\\uDE9A\\uD83D\\uDE99\\uD83D\\uDE98\\uD83D\\uDE97\\uD83D\\uDE96\\uD83D\\uDE95\\uD83D\\uDE94\\uD83D\\uDE93\\uD83D\\uDE92(454701103)解除禁言","消息类型":3012,"消息子类型":0,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '群事件_某人被解除禁言' => "3012.0",
         
-        '好友事件_被好友删除'             => 1003,
-        '好友事件_签名变更'               => 101,
-        '好友事件_昵称改变'               => 102,
-        '好友事件_某人撤回事件'           => 103,
-        '好友事件_有新好友'               => 1016,
-        '好友事件_好友请求'               => 105,
-        '好友事件_对方同意了您的好友请求' => 106,
-        '好友事件_对方拒绝了您的好友请求' => 107,
-        '好友事件_资料卡点赞'             => 1017,
-        '好友事件_签名点赞'               => 109,
-        '好友事件_签名回复'               => 110,
-        '好友事件_个性标签点赞'           => 111,
-        '好友事件_随心贴回复'             => 112,
-        '好友事件_随心贴增添'             => 113,
-        '好友事件_系统提示'               => 114,
-        '好友事件_随心贴点赞'             => 115,
-        '好友事件_匿名提问_被提问'        => 116,
-        '好友事件_匿名提问_被点赞'        => 117,
-        '好友事件_匿名提问_被回复'        => 118,
-        '好友事件_输入状态'               => 119,
-        '空间事件_与我相关'               => 29,
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":908777454,"被动QQ":0,"来源群号":0,"消息内容":"收款专用户(908777454)删除了你","消息类型":2003,"消息子类型":0,"消息Req":0,"消息Seq":20370,"消息Random":445522106,"消息时间戳":1737316450}}
+        '好友事件_被好友删除'   => "2003.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"774232","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":2071267038,"来源群号":0,"消息内容":"(2071267038): simon\\uD83D\\uDCAD(454701103)撤回了一条消息","消息类型":2004,"消息子类型":0,"消息Req":0,"消息Seq":55272,"消息Random":1374357424,"消息时间戳":1737371096}}
+        '好友事件_某人撤回事件' => "2004.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":2975296615,"被动QQ":0,"来源群号":0,"消息内容":"我们已经是好友啦，一起来聊天吧!","消息类型":2005,"消息子类型":0,"消息Req":0,"消息Seq":0,"消息Random":0,"消息时间戳":0}}
+        '好友事件_有新好友'     => "2005.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":908777454,"被动QQ":0,"来源群号":0,"消息内容":"来自QQ号查找，问题1:添加后请发送\"菜单\"\n回答:你好\n问题2:网页版访问 bushu.wang\n回答:在吗","消息类型":2000,"消息子类型":0,"消息Req":1737318998000000,"消息Seq":1737318998,"消息Random":281639,"消息时间戳":1737318998}}
+        '好友事件_好友请求'     => "2000.0",
+        // {"server_info":{"key":"A2I8C","ip":"114.132.62.188","port":"9999","pid":"290968","path":"C:%5CDuLuNTQQ%5CContainer.exe","ver":"1.2.1"},"type":"Event","data":{"框架QQ":2071267038,"主动QQ":454701103,"被动QQ":0,"来源群号":0,"消息内容":"simon\\uD83D\\uDCAD(454701103)赞了我的资料卡1次","消息类型":2001,"消息子类型":0,"消息Req":0,"消息Seq":19923,"消息Random":1016312274,"消息时间戳":1737315749}}
+        '好友事件_资料卡点赞'   => "2001.0",
         
-        '登录事件_电脑上线'             => 200,
-        '登录事件_电脑下线'             => 201,
-        '登录事件_移动设备上线'         => 202,
-        '登录事件_移动设备下线'         => 203,
-        '登录事件_其他应用登录验证请求' => 204,
-        '框架事件_登录成功'             => 11001,
-        '框架事件_登录失败'             => 38,
-        
-        '消息类型_临时会话'                  => 141,
-        '消息类型_临时会话_群临时'           => 0,
-        '消息类型_临时会话_讨论组临时'       => 1,
-        '消息类型_临时会话_公众号'           => 129,
-        '消息类型_临时会话_网页QQ咨询'       => 201,
-        '消息类型_临时会话_好友申请验证消息' => 134,
-        '消息类型_好友通常消息'              => 166,
-        '消息类型_讨论组消息'                => 83,
+        '框架事件_登录成功' => "31.0",
+        '框架事件_登录失败' => "38.0",
     ];
     
     
@@ -130,7 +93,12 @@ class EBotNT extends Common
      */
     private int $timeout = 10;
     
-    public function init(string $host, int $robot, int $port = 6000, string $key = 'A2I8C'): void
+    private bool       $ret_ok;
+    private int        $ret_code;
+    private string     $ret_message;
+    private array|null $ret_data;
+    
+    public function init(string $host, int $robot, int $port = 2000, string $key = 'A2I8C'): void
     {
         $this->host     = $host;
         $this->robot_qq = $robot;
@@ -180,55 +148,24 @@ class EBotNT extends Common
      */
     public function qrLogin(int|string $qq, int|string $protocol = 5): array
     {
-        // 将字符串协议改为正确的code
-        if (is_string($protocol)) {
-            if ($protocol === 'watch') {
-                $protocol = 5;
-            } elseif ($protocol === 'ipad') {
-                $protocol = 6;
-            } elseif ($protocol === 'pc') {
-                $protocol = 9;
-            } else {
-                $protocol = 5;
-            }
-        }
-        
         $param = [
-            'qq'       => $qq,
-            'protocol' => $protocol,
+            'qq' => $qq,
         ];
-        $json  = $this->query('/qrLogin', $param);
-        $arr   = json_decode($json, true);
-        if ($arr) {
-            $retcode = $arr['retcode'];
-            $retmsg  = $arr['retmsg'];
-            if ($retcode === 0) {
+        $this->query('/qrLogin', $param);
+        
+        if ($this->ret_ok) {
+            if ($this->ret_code === 0) {
                 $data = [
                     'status' => 1,
-                    'qr'     => $arr['qr'],
+                    'qr'     => $this->ret_data['qr_data'],
+                    'qr_id'  => $this->ret_data['qr_id'],
                     'msg'    => '二维码获取成功',
-                ];
-            } elseif ($retcode === -103) {
-                // 已在执行登录任务
-                // 但是小栗子长时间没有主动query会二维码失效，但是如果时间太长的话就会检测不出来（依旧显示等待扫码），所以直接删除
-                $this->del();
-                $data = [
-                    'status' => 2,
-                    'msg'    => '二维码已失效',
-                ];
-            } elseif ($retcode === -104) {
-                // QQ[xxxx]当前状态无法再进行登录操作
-                // 例如失效 冻结之类的好像，需要先删除再拉取二维码
-                $this->del();
-                $data = [
-                    'status' => 2,
-                    'msg'    => '数据已重置，请重试',
                 ];
             } else {
                 $data = [
                     'status' => 2,
                     'qr'     => '',
-                    'msg'    => $retmsg,
+                    'msg'    => $this->ret_message,
                 ];
             }
         } else {
@@ -238,6 +175,7 @@ class EBotNT extends Common
                 'msg'    => '拉取授权超时，请稍后重试',
             ];
         }
+        
         return $data;
     }
     
@@ -248,10 +186,27 @@ class EBotNT extends Common
      */
     public function del(): array
     {
-        $res = $this->query('/del');
-        $arr = json_decode($res, true);
-        if ($arr && ($arr['retcode'] === 0 || $arr['retcode'] === -126)) {
-            // 0成功 -126 qq不存在
+        // {
+        //    "code": 0,
+        //    "message": "",
+        //    "data": {
+        //        "result": true,
+        //        "uin": 2071267038
+        //    },
+        //    "echo": ""
+        //}
+        
+        // {
+        //    "code": 50001,
+        //    "message": "删除失败",
+        //    "data": {
+        //        "result": false,
+        //        "uin": 2071267038
+        //    },
+        //    "echo": ""
+        //}
+        $this->query('/del');
+        if ($this->ret_ok && $this->ret_code === 0) {
             $data = [
                 'status' => 1,
                 'msg'    => $this->robot_qq . '删除成功',
@@ -259,9 +214,10 @@ class EBotNT extends Common
         } else {
             $data = [
                 'status' => 2,
-                'msg'    => $arr['retmsg'] ?? '删除错误',
+                'msg'    => $this->ret_message,
             ];
         }
+        
         return $data;
     }
     
@@ -272,27 +228,20 @@ class EBotNT extends Common
      */
     public function checkOnline(): array
     {
-        $res = $this->query('/getSessionkey'); // 失败返回json  成功返回32位字符串 访问超时返回空
-        if ($res) {
-            $arr = json_decode($res, true);
-            if ($arr) {
-                return [
-                    'status' => 2,
-                    'msg'    => '当前QQ不在线',
-                    'data'   => $arr,
-                ];
-            } else {
-                return [
-                    'status' => 1,
-                    'msg'    => $res,
-                ];
-            }
+        $this->query('/getClientkey');
+        if ($this->ret_ok && $this->ret_code === 0) {
+            $data = [
+                'status' => 1,
+                'msg'    => $this->ret_data['Clientkey'],
+            ];
         } else {
-            return [
+            $data = [
                 'status' => 2,
-                'msg'    => '访问接口超时',
+                'qr'     => '',
+                'msg'    => $this->ret_message,
             ];
         }
+        return $data;
     }
     
     /**
@@ -407,11 +356,25 @@ class EBotNT extends Common
      */
     public function getCookie(string $type, bool $cache = false): array
     {
-        $ret   = $this->getLoginParams($type);
-        $param = [
-            'domain' => $ret['domain'],
+        // 不在此数组中的只能用登录网页来实时获取cookie
+        $cacheType = [
+            'qzoneh5',
+            'vip',
+            'pay',
+            'payh5',
+            'qun',
         ];
         
+        $ret   = $this->getLoginParams($type);
+        $param = [
+            'url'   => urldecode($ret['u1']),
+            'appid' => $ret['aid'],
+            'daid'  => $ret['daid'],
+        ];
+        
+        if ($cache && in_array($type, $cacheType)) {
+            $param['type'] = $type;
+        }
         
         $json = $this->query('/getCookie', $param);
         $arr  = json_decode($json, true);
@@ -422,9 +385,9 @@ class EBotNT extends Common
             ];
         } elseif ($arr && $arr['retcode'] === 0) {
             $cookie = $arr['data'];
-            preg_match('/skey=(.{10})/', $cookie, $skey);
-            preg_match("/p_skey=(.{44})/", $cookie, $p_skey);
-            preg_match("/pt4_token=(.{44})/", $cookie, $pt4_token);
+            preg_match('/skey=(.{10});/', $cookie, $skey);
+            preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
+            preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
             
             if (isset($skey[1]) && isset($p_skey[1])) {
                 $data = [
@@ -486,7 +449,7 @@ class EBotNT extends Common
         $errmsg = ''; // 点赞错误信息
         
         for ($i = 1; $i <= $num; $i++) {
-            // 好友最多20  陌生人最多执行50次
+            // 最多执行20次
             if ($i > 20) {
                 break;
             }
@@ -495,20 +458,23 @@ class EBotNT extends Common
             $json = $this->query('/cardLike', [
                 'toqq' => $toqq,
             ]);
-            
             if ($json) {
                 $arr = json_decode($json, true);
                 if (isset($arr['retcode'])) {
                     // 成功
                     if ($arr['retcode'] === 0) {
                         $succ++;
+                    } elseif ($arr['retcode'] === 1) {
+                        $err++;
+                        $errmsg = "TA不是你的好友";
+                        break; // 点赞失败的话就停止循环
                     } elseif ($arr['retcode'] === 404) {
                         $err++;
                         $errmsg = "自动更新已掉线";
                         break; //点赞失败的话就停止循环
                     } else {
                         $err++;
-                        $errmsg = ($arr['retmsg'] ?: "PCNT协议风控中") . "[{$arr['retcode']}]";
+                        $errmsg = ($arr['retmsg'] ?: "手表协议风控中") . "[{$arr['retcode']}]";
                         break; // 点赞失败后直接跳出循环
                     }
                 } else {
@@ -560,7 +526,50 @@ class EBotNT extends Common
      */
     public function cardLike2(string|int $toqq, int $num = 1, int $type = 1): string
     {
-        return $this->cardLike($toqq, $num);
+        // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
+        
+        $num = max($num, 1); // 最少1赞
+        $num = min($num, 20); // 最多20赞
+        
+        // 根据数量使用不同的接口
+        if ($num > 1) {
+            $mod = '/cardLike2';
+        } else {
+            $mod = '/cardLike';
+        }
+        $json = $this->query($mod, [
+            'toqq' => $toqq,
+            'num'  => $num,
+            'type' => $type,
+        ]);
+        
+        // {"retcode":51,"retmsg":"每天最多给她点20个赞哦。","msg":"给2362836002点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D000077080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D0000470A0A000112D1419A0822427180E530334623E6AF8FE5A4A9E69C80E5A49AE7BB99E5A5B9E782B93230E4B8AAE8B59EE593A6E380820B13000000008CD604222C3D000C4CFC150B8C980CA80C"}
+        
+        // {"retcode":1,"retmsg":"not friend","msg":"给2362836001点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D00005E080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D00002E0A0A00011257CD76C722427180E53001460A6E6F7420667269656E640B13000000008CD604212C3D000C4CFC150B8C980CA80C"}
+        
+        if ($json) {
+            $arr = json_decode($json, true);
+            try {
+                // 成功
+                if ($arr['retcode'] === 0) {
+                    $msg = "名片点赞{$num}次成功";
+                } elseif ($arr['retcode'] === 1) {
+                    $msg = "名片点赞{$num}次失败：TA不是你的好友";
+                } elseif ($arr['retcode'] === 404) {
+                    // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
+                    $msg = "名片点赞{$num}次失败：自动更新已掉线";
+                } else {
+                    $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
+                    $msg    = "名片点赞{$num}次失败：{$retmsg}";
+                }
+            } catch (\Exception $e) {
+                $msg = "名片点赞提交失败：{$json}";
+            }
+        } else {
+            $msg = "名片点赞{$num}次超时";
+        }
+        
+        return $msg;
     }
     
     /**
@@ -788,42 +797,21 @@ class EBotNT extends Common
     public function getAll(): string
     {
         // {"QQlist":{"454701103":{"昵称":"simon\\u2776","登录状态":"未登录","等级信息":"SVIP10|169|29550|7.7| 30","收发信息":"10分55秒 收:2,发:0,速:0条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"183.47.117.157:443[所在地代码:sz]"},"2686426513":{"昵称":"\\u0E51花生小狗\\u0E51","登录状态":"登录完毕","等级信息":"NoVIP| 29| 961|0.0| 59","收发信息":"11分26秒 收:3,发:15,速:1条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"222.94.109.183:443[所在地代码:sh]"}}}
-        
-        $str = $this->query('/getAll', ['qq' => 10000]);
-        
-        $arr = explode("\r\n", $str);
-        
-        $qqlist = [];
-        if (count($arr) > 0) {
-            foreach ($arr as $qq) {
-                $qqlist[$qq] = [
-                    '昵称'       => '',
-                    '登录状态'   => '登录完毕',
-                    '等级信息'   => '',
-                    '收发信息'   => '',
-                    '登录IP'     => '',
-                    '登录协议'   => 'EBotNT',
-                    '腾讯服务器' => '',
-                ];
-            }
-        }
-        
-        $data = ['QQlist' => $qqlist];
-        
-        return json_encode($data, JSON_UNESCAPED_UNICODE);
+        return $this->query('/getAll', ['qq' => 10000]);
     }
     
     /**
      * 好友请求事件处理
      *
      * @param int  $toqq      对方QQ
+     * @param int  $req       消息Req
      * @param int  $seq       消息Seq
      * @param int  $oper_type 1同意 2拒绝
      * @param bool $pack      是否需要自己发包 ，否为使用框架自身API (自己发包只能同意请求)
      *
      * @return string 不会有返回值
      */
-    public function friendHandle(int $toqq, int $seq, int $oper_type, bool $pack = false): string
+    public function friendHandle(int $toqq, int $req, int $seq, int $oper_type, bool $pack = false): string
     {
         if ($pack) {
             $param = [
@@ -833,6 +821,7 @@ class EBotNT extends Common
         } else {
             $param = [
                 'toqq'      => $toqq,
+                'req'       => $req,
                 'seq'       => $seq,
                 'oper_type' => $oper_type,
             ];
@@ -1191,6 +1180,30 @@ class EBotNT extends Common
         
         $url = "http://{$this->host}:{$this->port}{$path}";
         
-        return $this->curl($url, post: json_encode($param), timeout: $this->timeout);
+        $json = $this->curl($url, post: json_encode($param), timeout: $this->timeout);
+        if ($json) {
+            $arr               = json_decode($json, true);
+            $this->ret_ok      = true;
+            $this->ret_code    = $arr['code'];
+            $this->ret_message = $arr['message'];
+            $this->ret_data    = $arr['data'];
+        } else {
+            $this->ret_ok      = false;
+            $this->ret_code    = -1;
+            $this->ret_message = '接口访问超时';
+            $this->ret_data    = null;
+        }
+        
+        return $json;
+    }
+    
+    /**
+     * 获取当前类名（包含命名空间）
+     *
+     * @return string
+     */
+    public function getClassName(): string
+    {
+        return __CLASS__;
     }
 }

@@ -27,9 +27,7 @@ class Dream extends Common
         
         '框架事件_登录成功' => 12002,
         '框架事件_登录失败' => 12003,
-    ];
-    
-    public array $MSG_TYPE_CODE = [
+        
         '消息类型_临时会话'     => 141,
         '消息类型_好友通常消息' => 166,
         '消息类型_讨论组消息'   => 83,
@@ -205,6 +203,30 @@ class Dream extends Common
         return $data;
     }
     
+    public function getClientKey(): array
+    {
+        $res = $this->query('/getClientkey'); // 失败返回offline  成功返回[Clientkey字符串]
+        if ($res) {
+            if ($res === 'offline') {
+                return [
+                    'status' => 2,
+                    'msg'    => '当前QQ不在线',
+                ];
+            } else {
+                return [
+                    'status' => 1,
+                    'msg'    => '当前QQ在线',
+                    'data'   => $res,
+                ];
+            }
+        } else {
+            return [
+                'status' => -1,
+                'msg'    => '访问接口超时',
+            ];
+        }
+    }
+    
     /**
      * QQ是否在线
      *
@@ -279,21 +301,21 @@ class Dream extends Common
                     } else {
                         $data = [
                             'status' => 2,
-                            'msg'    => "{$this->robot_qq}登录失败：二维码过期或你拒绝了登录",
+                            'msg'    => "二维码过期或你拒绝了登录",
                         ];
                     }
                 }
             } else {
                 $data = [
                     'status' => 2,
-                    'msg'    => "{$this->robot_qq}登录失败：返回数据格式错误",
+                    'msg'    => "返回数据格式错误",
                 ];
             }
         } else {
             // 其他错误
             $data = [
                 'status' => 3,
-                'msg'    => "{$this->robot_qq}登录失败：服务器访问超时",
+                'msg'    => "服务器访问超时",
             ];
         }
         return $data;
@@ -325,13 +347,13 @@ class Dream extends Common
             ];
         } elseif ($arr && $arr['retcode'] === 0) {
             $cookie = $arr['data'];
-            preg_match('/skey=(.{10});/', $cookie, $skey);
+            preg_match('/skey=(.*?);/', $cookie, $skey);
             if ($type === 'qzone' || $type === 'qzoneh5') {
-                preg_match("/p_skey=(.{44});/", $cookie, $p_skey);
+                preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
             } else {
-                preg_match("/p_skey2=(.{44});/", $cookie, $p_skey);
+                preg_match("/p_skey2=(.*?);/", $cookie, $p_skey);
             }
-            preg_match("/pt4_token=(.{44});/", $cookie, $pt4_token);
+            preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
             
             if (isset($skey[1]) && isset($p_skey[1])) {
                 $data = [
@@ -698,7 +720,7 @@ class Dream extends Common
                         '昵称'       => '',
                         '登录状态'   => '登录完毕',
                         '等级信息'   => '',
-                        '收发信息'   => 'PC不返回数据',
+                        '收发信息'   => '',
                         '登录IP'     => '',
                         '登录协议'   => 'Dream',
                         '腾讯服务器' => '',
@@ -716,13 +738,14 @@ class Dream extends Common
      * 好友请求事件处理
      *
      * @param int  $toqq      对方QQ
+     * @param int  $req       消息Req
      * @param int  $seq       消息Seq
      * @param int  $oper_type 1同意 2拒绝
      * @param bool $pack      是否需要自己发包 ，否为使用框架自身API (自己发包只能同意请求)
      *
      * @return string 不会有返回值
      */
-    public function friendHandle(int $toqq, int $seq, int $oper_type, bool $pack = false): string
+    public function friendHandle(int $toqq, int $req, int $seq, int $oper_type, bool $pack = false): string
     {
         if ($pack) {
             $param = [
@@ -732,6 +755,7 @@ class Dream extends Common
         } else {
             $param = [
                 'toqq'      => $toqq,
+                'req'       => $req,
                 'seq'       => $seq,
                 'oper_type' => $oper_type,
             ];
@@ -1091,5 +1115,15 @@ class Dream extends Common
         $url = "http://{$this->host}:{$this->port}{$path}";
         
         return $this->curl($url, post: json_encode($param), timeout: $this->timeout);
+    }
+    
+    /**
+     * 获取当前类名（包含命名空间）
+     *
+     * @return string
+     */
+    public function getClassName(): string
+    {
+        return __CLASS__;
     }
 }

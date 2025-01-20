@@ -182,55 +182,37 @@ class NapCat extends Common
      */
     public function qrLogin(int|string $qq, int|string $protocol = 5): array
     {
-        // 将字符串协议改为正确的code
-        if (is_string($protocol)) {
-            if ($protocol === 'watch') {
-                $protocol = 5;
-            } elseif ($protocol === 'ipad') {
-                $protocol = 6;
-            } elseif ($protocol === 'pc') {
-                $protocol = 9;
-            } else {
-                $protocol = 5;
-            }
-        }
-        
         $param = [
-            'qq'       => $qq,
-            'protocol' => $protocol,
+            'qq' => $qq,
         ];
-        $json  = $this->query('/qrLogin', $param);
-        $arr   = json_decode($json, true);
-        if ($arr) {
-            $retcode = $arr['retcode'];
-            $retmsg  = $arr['retmsg'];
-            if ($retcode === 0) {
-                $data = [
-                    'status' => 1,
-                    'qr'     => $arr['qr'],
-                    'msg'    => '二维码获取成功',
-                ];
-            } elseif ($retcode === -103) {
-                // 已在执行登录任务
-                // 但是小栗子长时间没有主动query会二维码失效，但是如果时间太长的话就会检测不出来（依旧显示等待扫码），所以直接删除
-                $this->del();
-                $data = [
-                    'status' => 2,
-                    'msg'    => '二维码已失效',
-                ];
-            } elseif ($retcode === -104) {
-                // QQ[xxxx]当前状态无法再进行登录操作
-                // 例如失效 冻结之类的好像，需要先删除再拉取二维码
-                $this->del();
-                $data = [
-                    'status' => 2,
-                    'msg'    => '数据已重置，请重试',
-                ];
+        $json  = $this->query('/api/GetQQLoginQrcode', $param);
+        if ($json) {
+            $arr = json_decode($json, true);
+            if ($arr && isset($arr['status'])) {
+                if ($arr['status'] === 1) {
+                    $data = [
+                        'status' => 1,
+                        'qr'     => $arr['qr_url'],
+                        'msg'    => '二维码获取成功',
+                    ];
+                } elseif ($arr['status'] === 3) {
+                    $data = [
+                        'status' => 3,
+                        'msg'    => '二维码获取失败：QQ已经登录',
+                    ];
+                } else {
+                    $data = [
+                        'status' => 2,
+                        'qr'     => '',
+                        'msg'    => $arr['msg'],
+                    ];
+                }
             } else {
+                trace($json, 'GetQQLoginQrcode');
                 $data = [
                     'status' => 2,
                     'qr'     => '',
-                    'msg'    => $retmsg,
+                    'msg'    => '二维码解析失败:' . $json,
                 ];
             }
         } else {
@@ -274,10 +256,16 @@ class NapCat extends Common
      */
     public function checkOnline(): array
     {
-        $res = $this->query('/getSessionkey'); // 失败返回json  成功返回32位字符串 访问超时返回空
+        return [
+            'status' => 2,
+            'msg'    => '当前QQ不在线',
+        ];
+        
+        $res = $this->query('/api/QQLogin/CheckLoginStatus');
+        // {"code":0,"data":{"isLogin":false,"qrcodeurl":""},"message":"success"}
         if ($res) {
             $arr = json_decode($res, true);
-            if ($arr) {
+            if ($arr['data']['isLogin'] === false) {
                 return [
                     'status' => 2,
                     'msg'    => '当前QQ不在线',
@@ -306,86 +294,37 @@ class NapCat extends Common
      */
     public function qrQuery(string $qr_id = ''): array
     {
-        $json = $this->query('/qrQuery', ['qr_id' => $qr_id]);
+        $json = $this->query('/api/qrQuery', ['qq' => $this->robot_qq]);
         if ($json) {
             $arr     = json_decode($json, true);
-            $retcode = $arr['retcode'];
-            $retmsg  = $arr['retmsg'] ?: '无';
+            $retcode = $arr['code'];
+            $retmsg  = $arr['message'] ?: '无';
             if ($retcode === 0) {
-                // {"retcode":0,"retmsg":"登录成功","time":"1679663947"}
-                $data = [
-                    'status' => 1,
-                    'msg'    => "{$this->robot_qq}登录成功",
-                ];
-            } elseif ($retcode === 505) {
-                // {"retcode":505,"retmsg":"等待用户扫码...","time":"1679663879"}
-                $data = [
-                    'status' => 3,
-                    'msg'    => "等待扫码中",
-                ];
-            } elseif ($retcode === 504) {
-                // {"retcode":504,"retmsg":"扫码成功，请在手机上确认登录","time":"1679663929"}
-                $data = [
-                    'status' => 3,
-                    'msg'    => "扫码成功，请在手机上确认登录",
-                ];
-            } elseif ($retcode === 502) {
-                // 实测 pandaLocal 用户在QQ中点击拒绝按钮或右上角X关闭，会返回502，但retmsg是空的
-                if ($retmsg === '无') {
+                if ($arr['data']['isLogin']) {
+                    // {
+                    //    "code": 0,
+                    //    "data": {
+                    //        "isLogin": false,
+                    //        "qrcodeurl": "https://txz.qq.com/p?k=rWCQy9zxahcp96cZ*fQB67GAz7VcV-vB&f=1600001604"
+                    //    },
+                    //    "message": "success"
+                    //}
                     $data = [
-                        'status' => 2,
-                        'msg'    => "您已拒绝了本次登录请求",
+                        'status' => 1,
+                        'msg'    => "{$this->robot_qq}登录成功",
                     ];
                 } else {
-                    // 设备网络不稳的或处于复杂网络环境
                     $data = [
-                        'status' => 2,
-                        'msg'    => "网络异常，请尝试使用TimAPP来授权",
+                        'status' => 3,
+                        'msg'    => "{$this->robot_qq}等待扫码中",
+                        'qr_url' => $arr['data']['qrcodeurl'],
                     ];
                 }
-            } elseif ($retcode === -109) {
-                $data = [
-                    'status' => 2,
-                    'msg'    => "已主动取消了二维码登录",
-                ];
-            } elseif ($retcode === -108) {
-                $data = [
-                    'status' => 4,
-                    'msg'    => "实际扫码QQ与本次申请的QQ{$this->robot_qq}不一致，登录失败[{$retcode}]",
-                ];
-            } elseif ($retcode === -107 || $retcode === 49 || $retcode === 503) {
-                // {"retcode":49,"retmsg":"","time":"1722509933"}
-                $data = [
-                    'status' => 2,
-                    'msg'    => "二维码已超时，如需继续登录请重新获取",
-                ];
-            } elseif ($retcode === 3) {
-                //  {"retcode":3,"retmsg":"获取二维码状态失败","time":"1700825011"} （应该是框架QQ存在，但是已超时(连接断开)会返回这个状态，和下面的code-4相反）
-                $data = [
-                    'status' => 3,
-                    'msg'    => "获取二维码状态失败",
-                ];
-            } elseif ($retcode === -2) {
-                //  {"retcode":-2,"retmsg":"扫码完成，登录失败错误代码:-2","time":"1701101228"}
-                $data = [
-                    'status' => 2,
-                    'msg'    => "扫码完成但已被风控，请使用新协议",
-                ];
-            } elseif ($retcode === -4) {
-                //  {"retcode":-4,"retmsg":"查询二维码状态失败！错误代码 -4","time":"1722509284"}  （比如登录期间，QQ从框架中删除掉就会返回，应该就是QQ不存在框架中返回这个状态）
-                $data = [
-                    'status' => 2,
-                    'msg'    => "超时登录，如需继续登录请重新获取",
-                ];
             } else {
-                //                if (function_exists('trace')) {
-                //                    trace($json . PHP_EOL, 'qrQuery_xlz');
-                //                }
-                
                 // 其他错误
                 $data = [
                     'status' => 2,
-                    'msg'    => "{$this->robot_qq}登录失败：{$retmsg}[$retcode]",
+                    'msg'    => "{$this->robot_qq}登录失败：[$retcode]$retmsg",
                 ];
             }
         } else {
@@ -414,38 +353,52 @@ class NapCat extends Common
             'domain' => $ret['domain'],
         ];
         
-        $json = $this->query('/get_cookies', $param);
-        $arr  = json_decode($json, true);
-        if (!$json) {
+        // {
+        //    "status": "ok",
+        //    "retcode": 0,
+        //    "data": {
+        //        "cookies": "pt2gguin=o0908777454; uin=o0908777454; skey=@dqUJAmlCf; pt_recent_uins=3dabef7ec4b6ff8fc481a1303799d92a88af5218f691281e0fb9ae13e35142aea1ef799992ec98c35dd647a0bc45f91a456e20df0b5d6b49; RK=YDtJPi/vc9; ptnick_908777454=e694b6e6acbee4b893e794a8e688b7; ptcz=d14c43b9f58a3e4f61a3397cc75f55851ae5c2303a35d74935afde24071758f2; p_uin=o0908777454; pt4_token=-9L1xJZxNd0U2x9kOSVmsy*kNiK4DbSo4kvg9Tqw8pM_; p_skey=lL8lJPEMAO4Z87sV0z3VcEJJ5YYZWaWW*T5Z8Z8q4DY_",
+        //        "bkn": "1116143708"
+        //    },
+        //    "message": "",
+        //    "wording": "",
+        //    "echo": null
+        //}
+        $json = $this->query('/api/getCookie', $param);
+        if ($json) {
+            $arr = json_decode($json, true);
+            if ($arr && $arr['retcode'] === 0 && $arr['status'] === 'ok') {
+                $cookie = $arr['data']['cookies'];
+                preg_match('/skey=(.{10})/', $cookie, $skey);
+                preg_match("/p_skey=(.{44})/", $cookie, $p_skey);
+                preg_match("/pt4_token=(.{44})/", $cookie, $pt4_token);
+                
+                if (isset($skey[1]) && isset($p_skey[1])) {
+                    $data = [
+                        'status'    => 1,
+                        'msg'       => $type . '的cookie获取成功',
+                        'cookie'    => $cookie,
+                        'skey'      => $skey[1],
+                        'p_skey'    => $p_skey[1],
+                        // pt4_token不是每个domain都有返回
+                        'pt4_token' => $pt4_token[1] ?? '',
+                    ];
+                } else {
+                    throw new \Exception($this->robot_qq . ':cookie获取成功但解析失败');
+                }
+            } else {
+                $data = [
+                    'status' => 2,
+                    'msg'    => "cookie获取失败：{$arr['message']}",
+                ];
+            }
+        } else {
             $data = [
                 'status' => -1,
                 'msg'    => 'cookie获取超时',
             ];
-        } elseif ($arr && $arr['retcode'] === 0 && $arr['status'] === 'ok') {
-            $cookie = $arr['data']['cookies'];
-            preg_match('/skey=(.{10})/', $cookie, $skey);
-            preg_match("/p_skey=(.{44})/", $cookie, $p_skey);
-            preg_match("/pt4_token=(.{44})/", $cookie, $pt4_token);
-            
-            if (isset($skey[1]) && isset($p_skey[1])) {
-                $data = [
-                    'status'    => 1,
-                    'msg'       => $type . '的cookie获取成功',
-                    'cookie'    => $cookie,
-                    'skey'      => $skey[1],
-                    'p_skey'    => $p_skey[1],
-                    // pt4_token不是每个都有返回
-                    'pt4_token' => $pt4_token[1] ?? '',
-                ];
-            } else {
-                throw new \Exception($this->robot_qq . ':cookie获取成功但解析失败');
-            }
-        } else {
-            $data = [
-                'status' => 2,
-                'msg'    => 'cookie获取失败',
-            ];
         }
+        
         return $data;
     }
     
@@ -716,6 +669,33 @@ class NapCat extends Common
         return $this->query('/sendGroupMsgJson', $param);
     }
     
+    public function getClientKey(): array
+    {
+        $param = [
+        ];
+        $json  = $this->query('/api/getClientKey', $param);
+        if ($json) {
+            $arr = json_decode($json, true);
+            if ($arr['retcode'] === 0) {
+                return [
+                    'status' => 1,
+                    'msg'    => '成功',
+                    'data'   => $arr['data']['clientkey'],
+                ];
+            } else {
+                return [
+                    'status' => 2,
+                    'msg'    => '获取clientkey失败',
+                ];
+            }
+        } else {
+            return [
+                'status' => -1,
+                'msg'    => '访问超时',
+            ];
+        }
+    }
+    
     /**
      * 获取框架所有QQ
      *
@@ -723,21 +703,70 @@ class NapCat extends Common
      */
     public function getAll(): string
     {
-        // {"QQlist":{"454701103":{"昵称":"simon\\u2776","登录状态":"未登录","等级信息":"SVIP10|169|29550|7.7| 30","收发信息":"10分55秒 收:2,发:0,速:0条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"183.47.117.157:443[所在地代码:sz]"},"2686426513":{"昵称":"\\u0E51花生小狗\\u0E51","登录状态":"登录完毕","等级信息":"NoVIP| 29| 961|0.0| 59","收发信息":"11分26秒 收:3,发:15,速:1条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"222.94.109.183:443[所在地代码:sh]"}}}
-        return $this->query('/getAll', ['qq' => 10000]);
+        // {
+        //    "908777454": {
+        //        "host": "0.0.0.0",
+        //        "port": 6099,
+        //        "prefix": "",
+        //        "token": "qqk5hdzekv",
+        //        "loginRate": 3,
+        //        "login_uin": "908777454",
+        //        "secretKey": "8wprhw2fibt",
+        //        "pid": 41504,
+        //        "addtime": 1736453407,
+        //        "onebot_port": 59999,
+        //        "login_status": 2
+        //    },
+        //    "2783550142": {
+        //        "host": "0.0.0.0",
+        //        "port": 6100,
+        //        "prefix": "",
+        //        "token": "qqk5hdzekv",
+        //        "loginRate": 3,
+        //        "login_uin": "2783550142",
+        //        "secretKey": "sz06wt3dtf8",
+        //        "pid": 44700,
+        //        "addtime": 1736453435,
+        //        "onebot_port": 60000,
+        //        "login_status": 0
+        //    }
+        //}
+        $str = $this->query('/api/getAll', ['qq' => 10000]);
+        $arr = json_decode($str, true);
+        
+        $qqlist = [];
+        if (count($arr) > 0) {
+            foreach ($arr as $qq => $item) {
+                if ($item['login_status'] === 2) {
+                    $qqlist[$qq] = [
+                        '昵称'       => '',
+                        '登录状态'   => '登录完毕',
+                        '等级信息'   => '',
+                        '收发信息'   => '',
+                        '登录IP'     => '',
+                        '登录协议'   => 'NapCat',
+                        '腾讯服务器' => '',
+                    ];
+                }
+            }
+        }
+        
+        $data = ['QQlist' => $qqlist];
+        return json_encode($data, JSON_UNESCAPED_UNICODE);
     }
     
     /**
      * 好友请求事件处理
      *
      * @param int  $toqq      对方QQ
+     * @param int  $req       消息Req
      * @param int  $seq       消息Seq
      * @param int  $oper_type 1同意 2拒绝
      * @param bool $pack      是否需要自己发包 ，否为使用框架自身API (自己发包只能同意请求)
      *
      * @return string 不会有返回值
      */
-    public function friendHandle(int $toqq, int $seq, int $oper_type, bool $pack = false): string
+    public function friendHandle(int $toqq, int $req, int $seq, int $oper_type, bool $pack = false): string
     {
         if ($pack) {
             $param = [
@@ -747,6 +776,7 @@ class NapCat extends Common
         } else {
             $param = [
                 'toqq'      => $toqq,
+                'req'       => $req,
                 'seq'       => $seq,
                 'oper_type' => $oper_type,
             ];
@@ -1095,8 +1125,8 @@ class NapCat extends Common
      */
     private function query(string $path, array $param = []): string
     {
-        //        // 追加框架QQ
-        //        $param['qq'] = $param['qq'] ?? $this->robot_qq;
+        // 追加框架QQ
+        $param['qq'] = $param['qq'] ?? $this->robot_qq;
         //        if (isset($param['qq']) && $param['qq'] === 0) {
         //            die('qq错误：' . $param['qq']);
         //        }
@@ -1104,5 +1134,15 @@ class NapCat extends Common
         $url = "http://{$this->host}:{$this->port}{$path}";
         
         return $this->curl($url, post: json_encode($param), header: ["Authorization: Bearer {$this->key}"], timeout: $this->timeout);
+    }
+    
+    /**
+     * 获取当前类名（包含命名空间）
+     *
+     * @return string
+     */
+    public function getClassName(): string
+    {
+        return __CLASS__;
     }
 }
