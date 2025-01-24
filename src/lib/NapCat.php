@@ -340,13 +340,12 @@ class NapCat extends Common
     /**
      * 获取cookie
      *
-     * @param string $type  登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
-     * @param bool   $cache 是为框架cookie，否为实时登录url获取cookie
+     * @param string $type 登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
      *
      * @return array
      * @throws \Exception
      */
-    public function getCookie(string $type, bool $cache = false): array
+    public function getCookie(string $type): array
     {
         $ret   = $this->getLoginParams($type);
         $param = [
@@ -893,14 +892,14 @@ class NapCat extends Common
      *
      * @param int|string $qq
      *
-     * @return string
+     * @return array
      */
-    public function login(int|string $qq): string
+    public function login(int|string $qq): array
     {
         $param = [
             'qq' => $qq,
         ];
-        return $this->query('/login', $param);
+        return json_decode($this->query('/login', $param), true);
     }
     
     /**

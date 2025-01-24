@@ -330,13 +330,12 @@ class Dream extends Common
      * @return array
      * @throws \Exception
      */
-    public function getCookie(string $type, bool $cache = false): array
+    public function getCookie(string $type): array
     {
         $ret   = $this->getLoginParams($type);
         $param = [
             'domain' => $ret['domain'],
         ];
-        
         
         $json = $this->query('/getCookie', $param);
         $arr  = json_decode($json, true);
@@ -706,7 +705,19 @@ class Dream extends Common
      */
     public function getAll(): string
     {
-        // {"QQlist":{"454701103":{"昵称":"simon\\u2776","登录状态":"未登录","等级信息":"SVIP10|169|29550|7.7| 30","收发信息":"10分55秒 收:2,发:0,速:0条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"183.47.117.157:443[所在地代码:sz]"},"2686426513":{"昵称":"\\u0E51花生小狗\\u0E51","登录状态":"登录完毕","等级信息":"NoVIP| 29| 961|0.0| 59","收发信息":"11分26秒 收:3,发:15,速:1条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"222.94.109.183:443[所在地代码:sh]"}}}
+        // query 只返回在线QQ号 每行一个
+        // 3465403731
+        //3495773997
+        //3623575686
+        //3269964018
+        //1594374070
+        //3315402870
+        //2325136602
+        //3695841342
+        //210567164
+        //3578067108
+        //3266968464
+        //377211367
         
         $str = $this->query('/getAll', ['qq' => 10000]);
         
@@ -872,14 +883,14 @@ class Dream extends Common
      *
      * @param int|string $qq
      *
-     * @return string
+     * @return array
      */
-    public function login(int|string $qq): string
+    public function login(int|string $qq): array
     {
         $param = [
             'qq' => $qq,
         ];
-        return $this->query('/login', $param);
+        return json_decode($this->query('/login', $param), true);
     }
     
     /**
@@ -1088,10 +1099,18 @@ class Dream extends Common
      */
     public function getFriendFilterList(): string
     {
-        $param = [
-        ];
-        
-        return $this->query('/getFriendFilterList', $param);
+        // {
+        //    "data": [
+        //        {
+        //            "uid": "u_DxxNwD_kmqtVhMeMdo6KrA",
+        //            "nick": "叁拾柒",
+        //            "note": "问题1:添加后请发送\"菜单\"\n回答:好\n问题2:网页版访问 bushu.wang\n回答:好",
+        //            "source": "QQ群",
+        //            "token": "B2AAD5D6C754A6579C3B46A8EAB46F2CC1F0C5A019B151FE547ECA8648575118A5DF2C7F1428B4E96A000BAD08A4DA25"
+        //        }
+        //    ]
+        //}
+        return $this->query('/getFriendFilterList', []);
     }
     
     /**

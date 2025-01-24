@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tianyage\QqFrame\lib;
 
+use Exception;
+
 class Dulu extends Common
 {
     
@@ -60,6 +62,8 @@ class Dulu extends Common
         '消息类型_群聊消息'     => "82.0",
     ];
     
+    /* 群打卡
+    {"框架QQ":3171469720,"主动QQ":1285994275,"被动QQ":0,"来源群号":548723330,"消息内容":"肥高联交流群(548723330) => 安职天翼   屹琛\\u202D\\u2067~喵\\u2067\\u202D(1285994275)今日已打卡 ","消息类型":3000,"消息子类型":0,"消息Req":0,"消息Seq":56188,"消息Random":1416006400,"消息时间戳":1737676470} */
     
     /**
      * IP或域名
@@ -96,10 +100,10 @@ class Dulu extends Common
      */
     private int $timeout = 10;
     
-    private bool       $ret_ok;
-    private int        $ret_code;
-    private string     $ret_message;
-    private array|null $ret_data;
+    private bool   $ret_ok;
+    private int    $ret_code;
+    private string $ret_message;
+    private string $ret_data;
     
     public function init(string $host, int $robot, int $port = 2000, string $key = 'A2I8C'): void
     {
@@ -148,6 +152,7 @@ class Dulu extends Common
      * @param int|string $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
      *
      * @return array
+     * @throws Exception
      */
     public function qrLogin(int|string $qq, int|string $protocol = 5): array
     {
@@ -156,26 +161,20 @@ class Dulu extends Common
         ];
         $this->query('/qrLogin', $param);
         
-        if ($this->ret_ok) {
-            if ($this->ret_code === 0) {
-                $data = [
-                    'status' => 1,
-                    'qr'     => $this->ret_data['qr_data'],
-                    'qr_id'  => $this->ret_data['qr_id'],
-                    'msg'    => '二维码获取成功',
-                ];
-            } else {
-                $data = [
-                    'status' => 2,
-                    'qr'     => '',
-                    'msg'    => $this->ret_message,
-                ];
-            }
+        if ($this->ret_code === 0) {
+            $arr  = json_decode($this->ret_data, true);
+            $data = [
+                'status' => 1,
+                'qr'     => $arr['qr_data'],
+                'qr_id'  => $arr['qr_id'],
+                'msg'    => '二维码获取成功',
+            ];
         } else {
             $data = [
                 'status' => 2,
                 'qr'     => '',
-                'msg'    => '拉取授权超时，请稍后重试',
+                'qr_id'  => 0,
+                'msg'    => $this->ret_message,
             ];
         }
         
@@ -186,33 +185,28 @@ class Dulu extends Common
      * 删除QQ
      *
      * @return array
+     * @throws Exception
      */
     public function del(): array
     {
         // {
         //    "code": 0,
-        //    "message": "",
-        //    "data": {
-        //        "result": true,
-        //        "uin": 2071267038
-        //    },
+        //    "message": "删除成功",
+        //    "data": "",
         //    "echo": ""
         //}
         
         // {
         //    "code": 50001,
         //    "message": "删除失败",
-        //    "data": {
-        //        "result": false,
-        //        "uin": 2071267038
-        //    },
+        //    "data": "",
         //    "echo": ""
         //}
         $this->query('/del');
-        if ($this->ret_ok && $this->ret_code === 0) {
+        if ($this->ret_code === 0) {
             $data = [
                 'status' => 1,
-                'msg'    => $this->robot_qq . '删除成功',
+                'msg'    => $this->ret_message,
             ];
         } else {
             $data = [
@@ -225,22 +219,47 @@ class Dulu extends Common
     }
     
     /**
-     * QQ是否在线
+     * 获取ClientKey
      *
      * @return array
+     * @throws Exception
      */
-    public function checkOnline(): array
+    public function getClientKey(): array
     {
         $this->query('/getClientkey');
-        if ($this->ret_ok && $this->ret_code === 0) {
+        if ($this->ret_code === 0) {
             $data = [
                 'status' => 1,
-                'msg'    => $this->ret_data['Clientkey'],
+                'msg'    => $this->ret_message,
+                'data'   => $this->ret_data,
             ];
         } else {
             $data = [
                 'status' => 2,
-                'qr'     => '',
+                'msg'    => $this->ret_message,
+                'data'   => '',
+            ];
+        }
+        return $data;
+    }
+    
+    /**
+     * QQ是否在线
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function checkOnline(): array
+    {
+        $this->query('/getClientkey');
+        if ($this->ret_code === 0) {
+            $data = [
+                'status' => 1,
+                'msg'    => $this->ret_data,
+            ];
+        } else {
+            $data = [
+                'status' => 2,
                 'msg'    => $this->ret_message,
             ];
         }
@@ -253,12 +272,13 @@ class Dulu extends Common
      * @param string $qr_id
      *
      * @return array
+     * @throws Exception
      */
     public function qrQuery(string $qr_id = ''): array
     {
-        $json = $this->query('/qrQuery', ['qr_id' => $qr_id]);
-        if ($json) {
-            $arr     = json_decode($json, true);
+        try {
+            $this->query('/qrQuery', ['qr_id' => $qr_id]);
+            $arr     = json_decode($this->ret_data, true);
             $retcode = $arr['retcode'];
             $retmsg  = $arr['retmsg'] ?: '无';
             if ($retcode === 0) {
@@ -335,39 +355,31 @@ class Dulu extends Common
                 // 其他错误
                 $data = [
                     'status' => 2,
-                    'msg'    => "{$this->robot_qq}登录失败：{$retmsg}[$retcode]",
+                    'msg'    => "登录失败：{$retmsg}[$retcode]",
                 ];
             }
-        } else {
+        } catch (Exception $e) {
             // 其他错误
             $data = [
                 'status' => 3,
                 'msg'    => "服务器访问超时",
             ];
         }
+        
+        
         return $data;
     }
     
     /**
      * 获取cookie
      *
-     * @param string $type  登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
-     * @param bool   $cache 是为框架cookie，否为实时登录url获取cookie
+     * @param string $type 登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
      *
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
-    public function getCookie(string $type, bool $cache = false): array
+    public function getCookie(string $type): array
     {
-        // 不在此数组中的只能用登录网页来实时获取cookie
-        $cacheType = [
-            'qzoneh5',
-            'vip',
-            'pay',
-            'payh5',
-            'qun',
-        ];
-        
         $ret   = $this->getLoginParams($type);
         $param = [
             'url'   => urldecode($ret['u1']),
@@ -375,42 +387,40 @@ class Dulu extends Common
             'daid'  => $ret['daid'],
         ];
         
-        if ($cache && in_array($type, $cacheType)) {
-            $param['type'] = $type;
-        }
-        
-        $json = $this->query('/getCookie', $param);
-        $arr  = json_decode($json, true);
-        if (!$json) {
+        try {
+            $this->query('/getCookie', $param);
+            if ($this->ret_code === 0) {
+                $cookie = $this->ret_data;
+                preg_match('/skey=(.{10});/', $cookie, $skey);
+                preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
+                preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
+                
+                if (isset($skey[1]) && isset($p_skey[1])) {
+                    $data = [
+                        'status'    => 1,
+                        'msg'       => $type . '的cookie获取成功',
+                        'cookie'    => $cookie,
+                        'skey'      => $skey[1],
+                        'p_skey'    => $p_skey[1],
+                        // pt4_token不是每个都有返回
+                        'pt4_token' => $pt4_token[1] ?? '',
+                    ];
+                } else {
+                    throw new Exception($this->robot_qq . ':cookie获取成功但解析失败');
+                }
+            } else {
+                $data = [
+                    'status' => 2,
+                    'msg'    => 'cookie获取失败',
+                ];
+            }
+        } catch (Exception $e) {
             $data = [
                 'status' => -1,
                 'msg'    => 'cookie获取超时',
             ];
-        } elseif ($arr && $arr['retcode'] === 0) {
-            $cookie = $arr['data'];
-            preg_match('/skey=(.{10});/', $cookie, $skey);
-            preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
-            preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
-            
-            if (isset($skey[1]) && isset($p_skey[1])) {
-                $data = [
-                    'status'    => 1,
-                    'msg'       => $type . '的cookie获取成功',
-                    'cookie'    => $cookie,
-                    'skey'      => $skey[1],
-                    'p_skey'    => $p_skey[1],
-                    // pt4_token不是每个都有返回
-                    'pt4_token' => $pt4_token[1] ?? '',
-                ];
-            } else {
-                throw new \Exception($this->robot_qq . ':cookie获取成功但解析失败');
-            }
-        } else {
-            $data = [
-                'status' => 2,
-                'msg'    => 'cookie获取失败',
-            ];
         }
+        
         return $data;
     }
     
@@ -421,6 +431,7 @@ class Dulu extends Common
      * @param string $params
      *
      * @return string
+     * @throws Exception
      */
     public function qunqd(string $group, string $params): string
     {
@@ -433,7 +444,6 @@ class Dulu extends Common
     
     /**
      * 名片赞
-     * (非好友情况下进行点赞时返回成功，但不一定真正点上了，对方开启陌生人点赞时才能点上(手Q默认关闭陌生人点赞))
      *
      * @param string|int $toqq 对方QQ
      * @param int        $num  点赞次数 默认1
@@ -442,79 +452,7 @@ class Dulu extends Common
      */
     public function cardLike(string|int $toqq, int $num = 1): string
     {
-        // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
-        $num = max($num, 1); // 最少点赞一次
-        
-        //        $json    = '';
-        $succ = 0; // 点赞成功次数的统计
-        $err  = 0; // 点赞失败
-        //        $timeout = 0; // 点赞超时
-        $errmsg = ''; // 点赞错误信息
-        
-        for ($i = 1; $i <= $num; $i++) {
-            // 最多执行20次
-            if ($i > 20) {
-                break;
-            }
-            
-            // 判断点赞成功与失败
-            $json = $this->query('/cardLike', [
-                'toqq' => $toqq,
-            ]);
-            if ($json) {
-                $arr = json_decode($json, true);
-                if (isset($arr['retcode'])) {
-                    // 成功
-                    if ($arr['retcode'] === 0) {
-                        $succ++;
-                    } elseif ($arr['retcode'] === 1) {
-                        $err++;
-                        $errmsg = "TA不是你的好友";
-                        break; // 点赞失败的话就停止循环
-                    } elseif ($arr['retcode'] === 404) {
-                        $err++;
-                        $errmsg = "自动更新已掉线";
-                        break; //点赞失败的话就停止循环
-                    } else {
-                        $err++;
-                        $errmsg = ($arr['retmsg'] ?: "手表协议风控中") . "[{$arr['retcode']}]";
-                        break; // 点赞失败后直接跳出循环
-                    }
-                } else {
-                    if (function_exists('trace')) {
-                        trace($json . PHP_EOL, 'cardLike_xlz');
-                    }
-                    
-                    $err++;
-                    $errmsg = "异常数据";
-                    break; // 点赞失败的话就停止循环
-                }
-            } else {
-                $err++;
-                //                $timeout++;
-                $errmsg = '点赞超时';
-            }
-            
-            // 连续点赞做个延迟 0.02s
-            if ($num > 2 && $num !== $i) {
-                usleep(mt_rand(20000, 30000));  // 微秒
-            }
-        }
-        
-        // 总结本次点赞信息
-        if ($num > 1) {
-            if ($err) {
-                $msg = "名片点赞{$num}次，其中{$succ}次成功（{$errmsg}）";
-            } else {
-                $msg = "名片点赞成功{$num}次";
-            }
-        } elseif ($succ) {
-            $msg = '名片点赞成功1次';
-        } else {
-            $msg = "名片点赞失败1次：{$errmsg}";
-        }
-        
-        return $msg;
+        return $this->cardLike2($toqq, $num);
     }
     
     /**
@@ -529,46 +467,25 @@ class Dulu extends Common
      */
     public function cardLike2(string|int $toqq, int $num = 1, int $type = 1): string
     {
-        // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
-        
         $num = max($num, 1); // 最少1赞
         $num = min($num, 20); // 最多20赞
         
-        // 根据数量使用不同的接口
-        if ($num > 1) {
-            $mod = '/cardLike2';
-        } else {
-            $mod = '/cardLike';
-        }
-        $json = $this->query($mod, [
-            'toqq' => $toqq,
-            'num'  => $num,
-            'type' => $type,
-        ]);
-        
-        // {"retcode":51,"retmsg":"每天最多给她点20个赞哦。","msg":"给2362836002点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D000077080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D0000470A0A000112D1419A0822427180E530334623E6AF8FE5A4A9E69C80E5A49AE7BB99E5A5B9E782B93230E4B8AAE8B59EE593A6E380820B13000000008CD604222C3D000C4CFC150B8C980CA80C"}
-        
-        // {"retcode":1,"retmsg":"not friend","msg":"给2362836001点赞完成","hex":"10022C3C4C560A56697369746F72537663660C526573704661766F726974657D00005E080001060C526573704661766F7269746518000106165151536572766963652E526573704661766F726974651D00002E0A0A00011257CD76C722427180E53001460A6E6F7420667269656E640B13000000008CD604212C3D000C4CFC150B8C980CA80C"}
-        
-        if ($json) {
-            $arr = json_decode($json, true);
-            try {
-                // 成功
-                if ($arr['retcode'] === 0) {
-                    $msg = "名片点赞{$num}次成功";
-                } elseif ($arr['retcode'] === 1) {
-                    $msg = "名片点赞{$num}次失败：TA不是你的好友";
-                } elseif ($arr['retcode'] === 404) {
-                    // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
-                    $msg = "名片点赞{$num}次失败：自动更新已掉线";
-                } else {
-                    $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
-                    $msg    = "名片点赞{$num}次失败：{$retmsg}";
-                }
-            } catch (\Exception $e) {
-                $msg = "名片点赞提交失败：{$json}";
+        try {
+            $this->query('/cardLike', [
+                'toqq' => $toqq,
+                'num'  => $num,
+                'type' => $type,
+            ]);
+            
+            // 成功
+            if ($this->ret_code === 0) {
+                $msg = "名片点赞{$num}次成功";
+            } elseif ($this->ret_code === 1) {
+                $msg = "名片点赞{$num}次失败：TA不是你的好友";
+            } else {
+                $msg = "{$this->ret_message}[{$this->ret_code}]";
             }
-        } else {
+        } catch (Exception $e) {
             $msg = "名片点赞{$num}次超时";
         }
         
@@ -581,26 +498,34 @@ class Dulu extends Common
      * @param int    $toqq
      * @param string $file_url 图片地址
      * @param bool   $isflash  是否闪照(逻辑型,可空)
-     * @param string $type     path:本地路径 url:网络路径 usermem:共享内存id base64:BASE64编码数据(不推荐)
+     * @param string $type     path:本地路径 url:网络路径 base64:BASE64编码数据(不推荐)
      *
      * @return string [pic,hash=04B9E8C81D6656AF805233CBFAEEBE19,guid=/454701103-2590811547-04B9E8C81D6656AF805233CBFAEEBE19,wide=0,high=0,cartoon=false]
      *                失败返回空
      */
     public function uploadFriendPic(int $toqq, string $file_url, bool $isflash = false, string $type = 'url'): string
     {
+        // {
+        //    "code": 0,
+        //    "message": "好友图片上传完成",
+        //    "data": "[Image,size=34136,md5=bd13101fbb9aafd8acfc72ba3adccb03,sha1=f894ee5fc591c03e686c86cabebc06ec0b7c1369,name=bd13101fbb9aafd8acfc72ba3adccb03.mjpeg,width=400,height=400,fileid=EhT4lO5fxZHAPmhshsq-vAbsC3wTaRjYigIg_goo06HF8O-OiwMyBHByb2RaEKF1Qnb21YZzkxGOdkh5sPk,url=https://multimedia.nt.qq.com.cn/download?appid=1406&fileid=EhT4lO5fxZHAPmhshsq-vAbsC3wTaRjYigIg_goo06HF8O-OiwMyBHByb2RaEKF1Qnb21YZzkxGOdkh5sPk&rkey=CAESOBkcro_MGujocMOdQbOEYO32ns1UGGuDTP9EQ_uGKcdtgi15knJWFj7h9A-kt-Ha8Jool-yhNSA8&spec=0]",
+        //    "echo": ""
+        //}
         $param = [
             'toqq'     => $toqq,
             'pic_type' => $type,
             'pic'      => $file_url,
             'is_flash' => $isflash,
         ];
-        $ret   = $this->query('/uploadFriendPic', $param);
-        
-        // 字符串开头是{的表示图片上传失败了，exp:{"retcode":404,"retmsg":"未在框架找到对应QQ","time":"1680018936"}
-        if (str_starts_with($ret, '{')) {
+        try {
+            $this->query('/uploadFriendPic', $param);
+            if ($this->ret_code === 0) {
+                return $this->ret_data;
+            } else {
+                return '';
+            }
+        } catch (Exception $e) {
             return '';
-        } else {
-            return $ret;
         }
     }
     
@@ -610,7 +535,7 @@ class Dulu extends Common
      * @param int    $group_id
      * @param string $file_url 图片地址
      * @param bool   $isflash  是否闪照(逻辑型,可空)
-     * @param string $type     path:本地路径 url:网络路径 usermem:共享内存id base64:BASE64编码数据(不推荐)
+     * @param string $type     path:本地路径 url:网络路径 base64:BASE64编码数据(不推荐)
      *
      * @return string 成功[pic,hash=04B9E8C81D6656AF805233CBFAEEBE19,wide=0,high=0,cartoon=false]
      *                失败返回空
@@ -623,12 +548,15 @@ class Dulu extends Common
             'pic'      => $file_url,
             'is_flash' => $isflash,
         ];
-        $ret   = $this->query('/uploadGroupPic', $param);
-        // 字符串开头是{的表示图片上传失败了，exp:{"retcode":404,"retmsg":"未在框架找到对应QQ","time":"1680018936"}
-        if (str_starts_with($ret, '{')) {
+        try {
+            $this->query('/uploadGroupPic', $param);
+            if ($this->ret_code === 0) {
+                return $this->ret_data;
+            } else {
+                return '';
+            }
+        } catch (Exception $e) {
             return '';
-        } else {
-            return $ret;
         }
     }
     
@@ -647,54 +575,21 @@ class Dulu extends Common
             'content' => $content,
         ];
         // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
-        $json = $this->query('/sendFriendMsg', $param);
-        if ($json) {
-            $arr = json_decode($json, true);
-            if ($arr) {
-                if ($arr['retcode'] === 0) {
-                    $data = [
-                        'status' => 1,
-                        'msg'    => '发送成功',
-                        'time'   => $arr['time'],
-                    ];
-                } elseif ($arr['retcode'] === 16) {
-                    $data = [
-                        'status' => 3,
-                        'msg'    => '对方不是你的好友',
-                    ];
-                } elseif ($arr['retcode'] === -1) {
-                    // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
-                    // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
-                    $data = [
-                        'status' => -2,
-                        'msg'    => '发送数据包失败，对方QQ不存在',
-                    ];
-                } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
-                    // {"retcode":1,"retmsg":"","time":"1714973481"}
-                    $data = [
-                        'status' => 1,
-                        'msg'    => '发送完成，但消息疑似被屏蔽',
-                        'time'   => $arr['time'],
-                    ];
-                } elseif ($arr['retcode'] === 405) {
-                    // [405]该框架QQ未登录
-                    $data = [
-                        'status' => -1,
-                        'msg'    => 'QQ目前离线中',
-                    ];
-                } else {
-                    $data = [
-                        'status' => 2,
-                        'msg'    => $json,
-                    ];
-                }
+        try {
+            $this->query('/sendFriendMsg', $param);
+            if ($this->ret_code === 0) {
+                $data = [
+                    'status' => 1,
+                    'msg'    => '发送成功',
+                    'time'   => 0,
+                ];
             } else {
                 $data = [
                     'status' => 2,
-                    'msg'    => '返回结果格式错误',
+                    'msg'    => $this->ret_message,
                 ];
             }
-        } else {
+        } catch (Exception $e) {
             $data = [
                 'status' => -1,
                 'msg'    => '访问超时',
@@ -704,23 +599,6 @@ class Dulu extends Common
         return $data;
     }
     
-    /**
-     * 发送私聊json消息
-     *
-     * @param int|string $toqq
-     * @param string     $base64_json
-     *
-     * @return string
-     */
-    public function sendFriendMsgJson(int|string $toqq, string $base64_json): string
-    {
-        $param = [
-            'toqq' => $toqq,
-            'json' => $base64_json,
-        ];
-        // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
-        return $this->query('/sendFriendMsgJson', $param);
-    }
     
     /**
      * 发送群消息
@@ -736,60 +614,28 @@ class Dulu extends Common
             'group'   => $group_id,
             'content' => $content,
         ];
-        // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
-        // {"retcode":110,"retmsg":"发送失败，你已被移出该群，请重新加群。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
-        // {"retcode":120,"retmsg":"你已被禁言，消息无法发送。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
-        $json = $this->query('/sendGroupMsg', $param);
-        $arr  = json_decode($json, true);
-        if ($arr) {
-            if ($arr['retcode'] === 0) {
+        try {
+            $this->query('/sendGroupMsg', $param);
+            if ($this->ret_code === 0) {
                 $data = [
                     'status' => 1,
                     'msg'    => '发送成功',
-                    'time'   => $arr['time'],
-                ];
-            } elseif ($arr['retcode'] === 110) {
-                $data = [
-                    'status' => 2,
-                    'msg'    => '发送失败，你已不在此群',
-                ];
-            } elseif ($arr['retcode'] === 120) {
-                $data = [
-                    'status' => 2,
-                    'msg'    => '发送失败，群内你已被禁言',
+                    'time'   => 0,
                 ];
             } else {
                 $data = [
                     'status' => 2,
-                    'msg'    => "发送失败：[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
+                    'msg'    => $this->ret_message,
                 ];
             }
-        } else {
+        } catch (Exception $e) {
             $data = [
-                'status' => 2,
-                'msg'    => '发送失败，接口返回错误',
+                'status' => -1,
+                'msg'    => '访问超时',
             ];
         }
         
         return $data;
-    }
-    
-    /**
-     * 发送群json消息
-     *
-     * @param int    $group_id
-     * @param string $base64_json
-     *
-     * @return string
-     */
-    public function sendGroupMsgJson(int $group_id, string $base64_json): string
-    {
-        $param = [
-            'group' => $group_id,
-            'json'  => $base64_json,
-        ];
-        // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
-        return $this->query('/sendGroupMsgJson', $param);
     }
     
     /**
@@ -799,8 +645,39 @@ class Dulu extends Common
      */
     public function getAll(): string
     {
-        // {"QQlist":{"454701103":{"昵称":"simon\\u2776","登录状态":"未登录","等级信息":"SVIP10|169|29550|7.7| 30","收发信息":"10分55秒 收:2,发:0,速:0条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"183.47.117.157:443[所在地代码:sz]"},"2686426513":{"昵称":"\\u0E51花生小狗\\u0E51","登录状态":"登录完毕","等级信息":"NoVIP| 29| 961|0.0| 59","收发信息":"11分26秒 收:3,发:15,速:1条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"222.94.109.183:443[所在地代码:sh]"}}}
-        return $this->query('/getAll', ['qq' => 10000]);
+        // {"2071267038":{"协议":"安卓手表","昵称":"步数助手 \\u2776","等级":0,"接收":0,"发送":0,"在线":"2分20秒","状态":1,"附加信息":"在线：2分20秒"},"908777454":{"协议":"安卓平板","昵称":"收款专用户","等级":0,"接收":0,"发送":0,"在线":"2分20秒","状态":1,"附加信息":"在线：2分20秒"}}
+        
+        
+        try {
+            $this->query('/getAll', ['qq' => 10000]);
+            if ($this->ret_code === 0) {
+                $arr    = json_decode($this->ret_data, true);
+                $qqlist = [];
+                if (count($arr) > 0) {
+                    foreach ($arr as $qq => $item) {
+                        if ($qq) {
+                            $qqlist[$qq] = [
+                                '昵称'       => $item['昵称'],
+                                '登录状态'   => $item['状态'] === 1 ? '登录完毕' : '未登录',
+                                '等级信息'   => $item['等级'],
+                                '收发信息'   => $item['附加信息'],
+                                '登录IP'     => '',
+                                '登录协议'   => $item['协议'],
+                                '腾讯服务器' => '',
+                            ];
+                        }
+                    }
+                }
+                
+                $data = ['QQlist' => $qqlist];
+                
+                return json_encode($data, JSON_UNESCAPED_UNICODE);
+            } else {
+                return $this->ret_message;
+            }
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
     
     /**
@@ -816,19 +693,24 @@ class Dulu extends Common
      */
     public function friendHandle(int $toqq, int $req, int $seq, int $oper_type, bool $pack = false): string
     {
-        if ($pack) {
-            $param = [
-                'toqq' => $toqq,
-            ];
-            return $this->query('/agreeFriend', $param);
-        } else {
-            $param = [
-                'toqq'      => $toqq,
-                'req'       => $req,
-                'seq'       => $seq,
-                'oper_type' => $oper_type,
-            ];
-            return $this->query('/friendHandle', $param);
+        try {
+            if ($pack) {
+                $param = [
+                    'toqq' => $toqq,
+                ];
+                $this->query('/agreeFriend', $param);
+            } else {
+                $param = [
+                    'toqq'      => $toqq,
+                    'req'       => $req,
+                    'seq'       => $seq,
+                    'oper_type' => $oper_type,
+                ];
+                $this->query('/friendHandle', $param);
+            }
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return '好友请求处理失败：' . $e->getMessage();
         }
     }
     
@@ -854,7 +736,12 @@ class Dulu extends Common
             'event_type' => $event_type,
             'reason'     => $reason,
         ];
-        return $this->query('/groupHandle', $param);
+        try {
+            $this->query('/groupHandle', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return '入群验证处理失败：' . $e->getMessage();
+        }
     }
     
     /**
@@ -871,7 +758,12 @@ class Dulu extends Common
             'group' => $group,
             'toqq'  => $toqq,
         ];
-        return $this->query('/kick', $param);
+        try {
+            $this->query('/kick', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return '踢出群成员失败：' . $e->getMessage();
+        }
     }
     
     /**
@@ -893,7 +785,12 @@ class Dulu extends Common
             'req'    => $req,
             'time'   => $time,
         ];
-        return $this->query('/withdraw', $param);
+        try {
+            $this->query('/withdraw', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return '撤回私聊失败：' . $e->getMessage();
+        }
     }
     
     /**
@@ -914,7 +811,12 @@ class Dulu extends Common
             'random' => $random,
             'req'    => $req,
         ];
-        return $this->query('/withdraw', $param);
+        try {
+            $this->query('/withdraw', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return '撤回群聊失败：' . $e->getMessage();
+        }
     }
     
     /**
@@ -933,7 +835,12 @@ class Dulu extends Common
             'pwd'      => $pwd,
             'protocol' => $protocol,
         ];
-        return $this->query('/add', $param);
+        try {
+            $this->query('/add', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return '添加QQ失败：' . $e->getMessage();
+        }
     }
     
     /**
@@ -941,14 +848,29 @@ class Dulu extends Common
      *
      * @param int|string $qq
      *
-     * @return string
+     * @return array
      */
-    public function login(int|string $qq): string
+    public function login(int|string $qq): array
     {
         $param = [
             'qq' => $qq,
         ];
-        return $this->query('/login', $param);
+        try {
+            $this->query('/login', $param);
+            // 2、239为登录下发成功，但需要验证  改为0是兼容其他框架的返回值
+            if ($this->ret_code === 2 || $this->ret_code === 239) {
+                $this->ret_code = 0;
+            }
+            return [
+                'retcode' => (string)$this->ret_code,
+                'retmsg'  => $this->ret_message,
+            ];
+        } catch (Exception $e) {
+            return [
+                'retcode' => -1,
+                'retmsg'  => '登录失败：' . $e->getMessage(),
+            ];
+        }
     }
     
     /**
@@ -956,14 +878,33 @@ class Dulu extends Common
      *
      * @param int|string $qq
      *
-     * @return string
+     * @return array
      */
-    public function logout(int|string $qq): string
+    public function logout(int|string $qq): array
     {
-        $param = [
-            'qq' => $qq,
-        ];
-        return $this->query('/logout', $param);
+        try {
+            $this->query('/logout', [
+                'qq' => $qq,
+            ]);
+            if ($this->ret_code === 0) {
+                $data = [
+                    'status' => 1,
+                    'msg'    => $this->robot_qq . '删除成功',
+                ];
+            } else {
+                $data = [
+                    'status' => 2,
+                    'msg'    => $this->ret_message,
+                ];
+            }
+        } catch (Exception $e) {
+            $data = [
+                'status' => 2,
+                'msg'    => '下线失败：' . $e->getMessage(),
+            ];
+        }
+        
+        return $data;
     }
     
     
@@ -1016,26 +957,14 @@ class Dulu extends Common
         //
         //' 语音包领取失败
         //' {"retcode":"109020070","retmsg":"语音口令匹配失败","skey":"v09dfa40a21652ff75dc29459ec78851","skey_expire":"1500","trans_seq":"1","err_show_flag":"2"}
-        return $this->query('/redpack', $param);
+        try {
+            $this->query('/redpack', $param);
+            return $this->ret_data;
+        } catch (Exception $e) {
+            return '';
+        }
     }
     
-    /**
-     * 获取群内未领取红包列表
-     * （只支持语音、手气、口令）
-     *
-     * @param int|string $toqq
-     * @param int|string $group
-     *
-     * @return string
-     */
-    public function getRedpackList(int|string $toqq, int|string $group): string
-    {
-        $param = [
-            'toqq'  => $toqq,
-            'group' => $group,
-        ];
-        return $this->query('/getRedpackList', $param);
-    }
     
     /**
      * 添加好友
@@ -1052,7 +981,12 @@ class Dulu extends Common
             'toqq'   => $toqq,
             'answer' => $answer,
         ];
-        return $this->query('/addFriend', $param);
+        try {
+            $this->query('/addFriend', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
     
     /**
@@ -1070,7 +1004,12 @@ class Dulu extends Common
             'data' => $code_str,
         ];
         
-        return $this->query('/parserCustomNode', $param);
+        try {
+            $this->query('/parserCustomNode', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
     
     /**
@@ -1088,7 +1027,12 @@ class Dulu extends Common
             'resId' => $resId,
         ];
         
-        return $this->query('/parserResId', $param);
+        try {
+            $this->query('/parserResId', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
     
     /**
@@ -1110,7 +1054,12 @@ class Dulu extends Common
             'msgjson' => base64_encode($msgjson),
         ];
         
-        return $this->query('/buildCustomNode', $param);
+        try {
+            $this->query('/buildCustomNode', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
     
     /**
@@ -1120,7 +1069,7 @@ class Dulu extends Common
      *
      * @param int $offset 跳过多少条，默认从0开始获取
      *
-     * @return string json，decode后的data为jce.view值
+     * @return string jce.view值或报错内容
      */
     public function getMpzList(int $offset = 0): string
     {
@@ -1129,7 +1078,16 @@ class Dulu extends Common
             'time'   => time(),
         ];
         
-        return $this->query('/getMpzList', $param);
+        try {
+            $this->query('/getMpzList', $param);
+            if ($this->ret_code === 0) {
+                return $this->ret_data;
+            } else {
+                return $this->ret_message;
+            }
+        } catch (Exception $e) {
+            return 'error：' . $e->getMessage();
+        }
     }
     
     /**
@@ -1147,20 +1105,47 @@ class Dulu extends Common
             'code' => $code,
         ];
         
-        return $this->query('/sendStatus', $param);
+        try {
+            $this->query('/sendStatus', $param);
+            return $this->ret_message;
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
     
     /**
      * 获取好友申请的过滤列表
      *
-     * @return string
+     * @return array
      */
-    public function getFriendFilterList(): string
+    public function getFriendFilterList(): array
     {
-        $param = [
-        ];
-        
-        return $this->query('/getFriendFilterList', $param);
+        try {
+            // {
+            //    "code": 0,
+            //    "message": "获取过滤列表成功",
+            //    "data": "{\"1\":\"3433\",\"2\":\"0\",\"3\":\"0\",\"4\":{\"1\":\"1\",\"2\":{\"1\":{\"1\":\"3497104486\",\"2\":\"白勺\",\"3\":\"0\",\"4\":\"1\",\"5\":\"\",\"6\":\"QQ群\",\"7\":\"对方加好友过于频繁，请谨慎同意\",\"8\":\"1735985315\",\"9\":\"1015979007\",\"10\":\"2\",\"12\":\"南昌\",\"13\":\"6D62027C75A8CB8335FA9C0387971A2EAE29D805C89960C3A866B719477B2D32676A45C77D7FAF2838C2F31887D17F31\"},\"1(1)\":{\"1\":\"2449048416\",\"2\":\"只对你动情????\",\"3\":\"20\",\"4\":\"1\",\"5\":\"\",\"6\":\"QQ空间\",\"7\":\"对方加好友过于频繁，请谨慎同意\",\"8\":\"1735744860\",\"9\":\"0\",\"10\":\"0\",\"12\":\"南阳\",\"13\":\"DF3BE38582665C637A53441F1A89C44AB49D45A235597B45DF86C938957348FDBA0138B0A35E8542F3BB296466B3DE5C\"}}}}",
+            //    "echo": ""
+            //}
+            $this->query('/getFriendFilterList', []);
+            if ($this->ret_code === 0) {
+                return [
+                    'status' => 1,
+                    'msg'    => $this->ret_message,
+                    'data'   => json_decode($this->ret_data, true),
+                ];
+            } else {
+                return [
+                    'status' => 2,
+                    'msg'    => $this->ret_message,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'status' => 2,
+                'msg'    => $e->getMessage(),
+            ];
+        }
     }
     
     /**
@@ -1170,6 +1155,7 @@ class Dulu extends Common
      * @param array  $param
      *
      * @return string
+     * @throws Exception
      */
     private function query(string $path, array $param = []): string
     {
@@ -1189,12 +1175,13 @@ class Dulu extends Common
             $this->ret_ok      = true;
             $this->ret_code    = $arr['code'];
             $this->ret_message = $arr['message'];
-            $this->ret_data    = $arr['data'];
+            $this->ret_data    = $arr['data'] ?: '';
         } else {
             $this->ret_ok      = false;
             $this->ret_code    = -1;
             $this->ret_message = '接口访问超时';
-            $this->ret_data    = null;
+            $this->ret_data    = '';
+            throw new Exception("{$path}接口访问超时", $this->ret_code);
         }
         
         return $json;

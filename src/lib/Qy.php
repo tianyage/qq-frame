@@ -398,33 +398,19 @@ class Qy extends Common
     /**
      * 获取cookie
      *
-     * @param string $type  登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
-     * @param bool   $cache 是为框架cookie，否为实时登录url获取cookie
+     * @param string $type 登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
      *
      * @return array
      * @throws \Exception
      */
-    public function getCookie(string $type, bool $cache = false): array
+    public function getCookie(string $type): array
     {
-        // 不在此数组中的只能用登录网页来实时获取cookie
-        $cacheType = [
-            'qzoneh5',
-            'vip',
-            'pay',
-            'payh5',
-            'qun',
-        ];
-        
         $ret   = $this->getLoginParams($type);
         $param = [
             'url'   => urldecode($ret['u1']),
             'appid' => $ret['aid'],
             'daid'  => $ret['daid'],
         ];
-        
-        if ($cache && in_array($type, $cacheType)) {
-            $param['type'] = $type;
-        }
         
         $json = $this->query('/getCookie', $param);
         $arr  = json_decode($json, true);
@@ -966,14 +952,14 @@ class Qy extends Common
      *
      * @param int|string $qq
      *
-     * @return string
+     * @return array
      */
-    public function login(int|string $qq): string
+    public function login(int|string $qq): array
     {
         $param = [
             'qq' => $qq,
         ];
-        return $this->query('/login', $param);
+        return json_decode($this->query('/login', $param), true);
     }
     
     /**
@@ -1187,14 +1173,24 @@ class Qy extends Common
     /**
      * 获取好友申请的过滤列表
      *
-     * @return string
+     * @return array
      */
-    public function getFriendFilterList(): string
+    public function getFriendFilterList(): array
     {
-        $param = [
-        ];
-        
-        return $this->query('/getFriendFilterList', $param);
+        $json = $this->query('/getFriendFilterList', []);
+        $arr  = json_decode($json, true);
+        if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '过滤列表获取成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['retmsg'] ?? '过滤列表访问超时',
+            ];
+        }
     }
     
     /**
