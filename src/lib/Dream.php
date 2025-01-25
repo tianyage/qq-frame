@@ -324,59 +324,56 @@ class Dream extends Common
     /**
      * 获取cookie
      *
-     * @param string $type  登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
-     * @param bool   $cache 是为框架cookie，否为实时登录url获取cookie
+     * @param string $type 登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
      *
      * @return array
-     * @throws \Exception
      */
     public function getCookie(string $type): array
     {
         $ret   = $this->getLoginParams($type);
         $param = [
+            'url'    => $ret['u1'],
             'domain' => $ret['domain'],
         ];
         
         $json = $this->query('/getCookie', $param);
-        $arr  = json_decode($json, true);
         if (!$json) {
             $data = [
                 'status' => -1,
                 'msg'    => 'cookie获取超时',
             ];
-        } elseif ($arr && $arr['retcode'] === 0) {
-            $cookie = $arr['data'];
-            preg_match('/skey=(.*?);/', $cookie, $skey);
-            if ($type === 'qzone' || $type === 'qzoneh5') {
+        } else {
+            $arr = json_decode($json, true);
+            if ($arr && $arr['retcode'] === 0) {
+                $cookie = $arr['data'];
+                preg_match('/skey=(.*?);/', $cookie, $skey);
                 preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
+                preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
+                
+                if (isset($skey[1]) && isset($p_skey[1])) {
+                    $data = [
+                        'status'    => 1,
+                        'msg'       => $type . '的cookie获取成功',
+                        'cookie'    => $cookie,
+                        'skey'      => $skey[1],
+                        'p_skey'    => $p_skey[1],
+                        // pt4_token不是每个都有返回
+                        'pt4_token' => $pt4_token[1] ?? '',
+                    ];
+                } else {
+                    // dr框架经常出这个问题，就是在线但是获取不到Cookie，需要框架里重新登录才行
+                    $data = [
+                        'status' => 2,
+                        'msg'    => 'cookie获取失败',
+                    ];
+                    //                throw new \Exception("{$this->robot_qq}cookie解析{$type}失败{$json}");
+                }
             } else {
-                preg_match("/p_skey2=(.*?);/", $cookie, $p_skey);
-            }
-            preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
-            
-            if (isset($skey[1]) && isset($p_skey[1])) {
-                $data = [
-                    'status'    => 1,
-                    'msg'       => $type . '的cookie获取成功',
-                    'cookie'    => $cookie,
-                    'skey'      => $skey[1],
-                    'p_skey'    => $p_skey[1],
-                    // pt4_token不是每个都有返回
-                    'pt4_token' => $pt4_token[1] ?? '',
-                ];
-            } else {
-                // dr框架经常出这个问题，就是在线但是获取不到Cookie，需要框架里重新登录才行
                 $data = [
                     'status' => 2,
                     'msg'    => 'cookie获取失败',
                 ];
-                //                throw new \Exception("{$this->robot_qq}cookie解析{$type}失败{$json}");
             }
-        } else {
-            $data = [
-                'status' => 2,
-                'msg'    => 'cookie获取失败',
-            ];
         }
         return $data;
     }
@@ -409,76 +406,7 @@ class Dream extends Common
      */
     public function cardLike(string|int $toqq, int $num = 1): string
     {
-        // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
-        $num = max($num, 1); // 最少点赞一次
-        
-        //        $json    = '';
-        $succ = 0; // 点赞成功次数的统计
-        $err  = 0; // 点赞失败
-        //        $timeout = 0; // 点赞超时
-        $errmsg = ''; // 点赞错误信息
-        
-        for ($i = 1; $i <= $num; $i++) {
-            // 好友最多20  陌生人最多执行50次
-            if ($i > 20) {
-                break;
-            }
-            
-            // 判断点赞成功与失败
-            $json = $this->query('/cardLike', [
-                'toqq' => $toqq,
-            ]);
-            
-            if ($json) {
-                $arr = json_decode($json, true);
-                if (isset($arr['retcode'])) {
-                    // 成功
-                    if ($arr['retcode'] === 0) {
-                        $succ++;
-                    } elseif ($arr['retcode'] === 404) {
-                        $err++;
-                        $errmsg = "自动更新已掉线";
-                        break; //点赞失败的话就停止循环
-                    } else {
-                        $err++;
-                        $errmsg = ($arr['retmsg'] ?: "PCNT协议风控中") . "[{$arr['retcode']}]";
-                        break; // 点赞失败后直接跳出循环
-                    }
-                } else {
-                    if (function_exists('trace')) {
-                        trace($json . PHP_EOL, 'cardLike_xlz');
-                    }
-                    
-                    $err++;
-                    $errmsg = "异常数据";
-                    break; // 点赞失败的话就停止循环
-                }
-            } else {
-                $err++;
-                //                $timeout++;
-                $errmsg = '点赞超时';
-            }
-            
-            // 连续点赞做个延迟 0.02s
-            if ($num > 2 && $num !== $i) {
-                usleep(mt_rand(20000, 30000));  // 微秒
-            }
-        }
-        
-        // 总结本次点赞信息
-        if ($num > 1) {
-            if ($err) {
-                $msg = "名片点赞{$num}次，其中{$succ}次成功（{$errmsg}）";
-            } else {
-                $msg = "名片点赞成功{$num}次";
-            }
-        } elseif ($succ) {
-            $msg = '名片点赞成功1次';
-        } else {
-            $msg = "名片点赞失败1次：{$errmsg}";
-        }
-        
-        return $msg;
+        return $this->cardLike2($toqq, $num);
     }
     
     /**
@@ -496,13 +424,7 @@ class Dream extends Common
         $num = max($num, 1); // 最少1赞
         $num = min($num, 20); // 最多20赞
         
-        // 根据数量使用不同的接口
-        if ($num > 1) {
-            $mod = '/cardLike2';
-        } else {
-            $mod = '/cardLike';
-        }
-        $json = $this->query($mod, [
+        $json = $this->query('/cardLike2', [
             'toqq' => $toqq,
             'num'  => $num,
             'type' => $type,
