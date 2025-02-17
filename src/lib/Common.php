@@ -4,6 +4,25 @@ namespace Tianyage\QqFrame\lib;
 
 class Common
 {
+    
+    /**
+     * 删除字符串中的特殊控制字符
+     * （可防止json数据有非UTF-8字符导致解析失败）
+     *
+     * @param string $str
+     *
+     * @return string
+     */
+    public function strip_control_characters(string $str): string
+    {
+        // [\x00-\x1F\x80-\xFF] 匹配 ASCII 控制字符和扩展 ASCII 字符集中的所有字符。这包括 ASCII 字符集中的控制字符（0x00到0x1F）和扩展 ASCII 字符集中的字符（0x80到0xFF）。
+        //
+        //[\x00-\x1F\x7F-\x9F] 也匹配 ASCII 控制字符，但扩展 ASCII 字符集的范围不同。这个表达式包括 ASCII 字符集中的控制字符（0x00到0x1F）以及在扩展 ASCII 字符集中的一部分（0x7F到0x9F）。
+        // u修饰符  启用查找Unicode
+        
+        return preg_replace('/[\x00-\x1F\x80-\xFF]/u', '', $str);
+    }
+    
     /**
      * 登录网页获取cookie的一些必要url参数
      *

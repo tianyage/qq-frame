@@ -1036,6 +1036,50 @@ class Dream extends Common
     }
     
     /**
+     * 删除名片赞列表的历史记录
+     *
+     * @param string|int $toqq   被删记录的QQ
+     * @param int        $offset 跳过多少条
+     *
+     * @return array
+     */
+    public function delMpzHistory(string|int $toqq = '', int $offset = 450): array
+    {
+        $params = [
+            'toqq'   => $toqq,
+            'offset' => $offset,
+        ];
+        $json   = $this->query('/delMpzHistory', $params);
+        $arr    = json_decode($json, true);
+        if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '清理成功',
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['retmsg'] ?? '清理列表访问超时',
+            ];
+        }
+    }
+    
+    /**
+     * 获取好友列表
+     *
+     * @param int $pack 是否用发包模式 0否
+     *
+     * @return array
+     */
+    public function getFriendList(int $pack = 1): array
+    {
+        return [
+            'status' => 2,
+            'msg'    => '当前协议不支持此API',
+        ];
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path

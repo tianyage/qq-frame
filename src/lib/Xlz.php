@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tianyage\QqFrame\lib;
 
+use Exception;
+
 class Xlz extends Common
 {
     
@@ -234,25 +236,16 @@ class Xlz extends Common
      */
     public function checkOnline(): array
     {
-        $res = $this->query('/getClientkey'); // 失败返回json  成功返回32位字符串 访问超时返回空
-        if ($res) {
-            $arr = json_decode($res, true);
-            if ($arr) {
-                return [
-                    'status' => 2,
-                    'msg'    => '当前QQ不在线',
-                    'data'   => $arr,
-                ];
-            } else {
-                return [
-                    'status' => 1,
-                    'msg'    => $res,
-                ];
-            }
+        $clientkey = $this->getClientKey();
+        if ($clientkey['status'] === 1) {
+            return [
+                'status' => 1,
+                'msg'    => '在线中',
+            ];
         } else {
             return [
                 'status' => 2,
-                'msg'    => '访问接口超时',
+                'msg'    => '当前QQ不在线',
             ];
         }
     }
@@ -366,7 +359,7 @@ class Xlz extends Common
         if ($json) {
             $arr = json_decode($json, true);
             if (isset($arr['code']) && $arr['code'] === 0) {
-                $str = $arr['data']['Clientkey'];
+                $str = $arr['data'];
                 if (str_starts_with($str, '{')) {
                     $sub_arr = json_decode($str, true);
                     return [
@@ -377,7 +370,7 @@ class Xlz extends Common
                     return [
                         'status' => 1,
                         'msg'    => '成功',
-                        'data'   => $arr['data']['Clientkey'],
+                        'data'   => $arr['data'],
                     ];
                 }
             } else {
@@ -403,7 +396,7 @@ class Xlz extends Common
      * @param string $type 登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
      *
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function getCookie(string $type): array
     {
@@ -438,12 +431,12 @@ class Xlz extends Common
                     'pt4_token' => $pt4_token[1] ?? '',
                 ];
             } else {
-                throw new \Exception($this->robot_qq . ':cookie获取成功但解析失败');
+                throw new Exception($this->robot_qq . ':cookie获取成功但解析失败');
             }
         } else {
-            if (function_exists('trace')) {
-                trace($json, 'getCookie_xlz');
-            }
+            //            if (function_exists('trace')) {
+            //                trace($json, 'getCookie_xlz');
+            //            }
             $data = [
                 'status' => 2,
                 'msg'    => 'cookie获取失败',
@@ -521,11 +514,14 @@ class Xlz extends Common
                 } elseif ($arr['retcode'] === 404) {
                     // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
                     $msg = "名片点赞{$num}次失败：自动更新已掉线";
+                } elseif ($arr['retcode'] === 20003) {
+                    // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
+                    $msg = $arr['retmsg'];
                 } else {
                     $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
                     $msg    = "名片点赞{$num}次失败：{$retmsg}";
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $msg = "名片点赞提交失败：{$json}";
             }
         } else {
@@ -611,42 +607,52 @@ class Xlz extends Common
         if ($json) {
             $arr = json_decode($json, true);
             if ($arr) {
-                if ($arr['retcode'] === 0) {
-                    $data = [
-                        'status' => 1,
-                        'msg'    => '发送成功',
-                        'time'   => $arr['time'],
-                    ];
-                } elseif ($arr['retcode'] === 16) {
-                    $data = [
-                        'status' => 3,
-                        'msg'    => '对方不是你的好友',
-                    ];
-                } elseif ($arr['retcode'] === -1) {
-                    // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
-                    // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
-                    $data = [
-                        'status' => -2,
-                        'msg'    => '发送数据包失败，对方QQ不存在',
-                    ];
-                } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
-                    // {"retcode":1,"retmsg":"","time":"1714973481"}
-                    $data = [
-                        'status' => 1,
-                        'msg'    => '发送完成，但消息疑似被屏蔽',
-                        'time'   => $arr['time'],
-                    ];
-                } elseif ($arr['retcode'] === 405) {
-                    // [405]该框架QQ未登录
-                    $data = [
-                        'status' => -1,
-                        'msg'    => 'QQ目前离线中',
-                    ];
-                } else {
+                try {
+                    if ($arr['retcode'] === 0) {
+                        $data = [
+                            'status' => 1,
+                            'msg'    => '发送成功',
+                            'time'   => $arr['time'],
+                        ];
+                    } elseif ($arr['retcode'] === 16) {
+                        $data = [
+                            'status' => 3,
+                            'msg'    => '对方不是你的好友',
+                        ];
+                    } elseif ($arr['retcode'] === -1) {
+                        // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
+                        // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
+                        $data = [
+                            'status' => -2,
+                            'msg'    => '发送数据包失败，对方QQ不存在',
+                        ];
+                    } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
+                        // {"retcode":1,"retmsg":"","time":"1714973481"}
+                        $data = [
+                            'status' => 1,
+                            'msg'    => '发送完成，但消息疑似被屏蔽',
+                            'time'   => $arr['time'],
+                        ];
+                    } elseif ($arr['retcode'] === 405) {
+                        // [405]该框架QQ未登录
+                        $data = [
+                            'status' => -1,
+                            'msg'    => 'QQ目前离线中',
+                        ];
+                    } else {
+                        $data = [
+                            'status' => 2,
+                            'msg'    => $json,
+                        ];
+                    }
+                } catch (Exception $e) {
                     $data = [
                         'status' => 2,
-                        'msg'    => $json,
+                        'msg'    => '消息发送失败',
                     ];
+                    if (function_exists('trace')) {
+                        trace($json . PHP_EOL, 'sendFriendMsg_xlz');
+                    }
                 }
             } else {
                 $data = [
@@ -908,7 +914,14 @@ class Xlz extends Common
         $param = [
             'qq' => $qq,
         ];
-        return json_decode($this->query('/login', $param), true);
+        $ret   = $this->query('/login', $param);
+        if ($ret) {
+            return json_decode($ret, true);
+        }
+        return [
+            'retcode' => "-1",
+            'retmsg'  => '连接服务器超时，请稍后重试',
+        ];
     }
     
     /**
@@ -1085,8 +1098,10 @@ class Xlz extends Common
     public function getMpzList(int $offset = 0): string
     {
         $param = [
-            'offset' => $offset,
-            'time'   => time(),
+            // time在后期可以删除了，因为不需要这个参数  还留着仅为兼容旧版插件考虑
+            'time'     => time(),
+            'offset'   => $offset,
+            'is_voter' => 1,
         ];
         
         return $this->query('/getMpzList', $param);
@@ -1129,6 +1144,77 @@ class Xlz extends Common
             return [
                 'status' => 2,
                 'msg'    => $arr['retmsg'] ?? '过滤列表访问超时',
+            ];
+        }
+    }
+    
+    /**
+     * 删除名片赞列表的历史记录
+     *
+     * @param string|int $toqq   被删记录的QQ
+     * @param int        $offset 跳过多少条
+     *
+     * @return array
+     */
+    public function delMpzHistory(string|int $toqq = '', int $offset = 450): array
+    {
+        $params = [
+            'toqq'   => $toqq,
+            'offset' => $offset,
+        ];
+        $json   = $this->query('/delMpzHistory', $params);
+        $arr    = json_decode($json, true);
+        if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '清理成功',
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['retmsg'] ?? '清理列表访问超时',
+            ];
+        }
+    }
+    
+    /**
+     * 获取好友列表
+     *
+     * @param int $pack 是否用发包模式 0否
+     *
+     * @return array
+     */
+    public function getFriendList(int $pack = 1): array
+    {
+        $params        = [
+            'pack' => $pack,
+        ];
+        $this->timeout = 30;
+        $json          = $this->query('/getFriendList', $params);
+        if ($json) {
+            $arr = json_decode($json, true);
+            // 处理控制符导致的解析错误
+            if (json_last_error() === JSON_ERROR_CTRL_CHAR) {
+                $json = parent::strip_control_characters($json);
+                $arr  = json_decode($json, true);
+            }
+            
+            if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+                return [
+                    'status' => 1,
+                    'msg'    => '获取成功',
+                    'data'   => $arr,
+                ];
+            } else {
+                return [
+                    'status' => 2,
+                    'msg'    => $arr['retmsg'] ?? '获取好友列表失败',
+                ];
+            }
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => '获取好友列表超时',
             ];
         }
     }

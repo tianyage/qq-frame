@@ -1115,6 +1115,43 @@ class NapCat extends Common
     }
     
     /**
+     * 删除名片赞列表的历史记录
+     *
+     * @param string|int $toqq
+     * @param int        $offset
+     *
+     * @return array
+     */
+    public function delMpzHistory(string|int $toqq = '', int $offset = 450): array
+    {
+        $params = [
+            'toqq'   => $toqq,
+            'offset' => $offset,
+        ];
+        $json   = $this->query('/delMpzHistory', $params);
+        $arr    = json_decode($json, true);
+        if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '清理成功',
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['retmsg'] ?? '清理列表访问超时',
+            ];
+        }
+    }
+    
+    public function getFriendList(int $pack = 1): array
+    {
+        return [
+            'status' => 2,
+            'msg'    => '当前协议不支持此API',
+        ];
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path

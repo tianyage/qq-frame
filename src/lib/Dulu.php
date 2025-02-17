@@ -482,6 +482,9 @@ class Dulu extends Common
                 $msg = "名片点赞{$num}次成功";
             } elseif ($this->ret_code === 1) {
                 $msg = "名片点赞{$num}次失败：TA不是你的好友";
+            } elseif ($this->ret_code === 20003) {
+                // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
+                $msg = $this->ret_message;
             } else {
                 $msg = "{$this->ret_message}[{$this->ret_code}]";
             }
@@ -1074,8 +1077,10 @@ class Dulu extends Common
     public function getMpzList(int $offset = 0): string
     {
         $param = [
-            'offset' => $offset,
-            'time'   => time(),
+            // time在后期可以删除了，因为不需要这个参数  还留着仅为兼容旧版插件考虑
+            'time'     => time(),
+            'offset'   => $offset,
+            'is_voter' => 1,
         ];
         
         try {
@@ -1149,6 +1154,76 @@ class Dulu extends Common
     }
     
     /**
+     * 删除名片赞列表的历史记录
+     *
+     * @param string|int $toqq   被删记录的QQ
+     * @param int        $offset 跳过多少条
+     *
+     * @return array
+     */
+    public function delMpzHistory(string|int $toqq = '', int $offset = 450): array
+    {
+        try {
+            $params = [
+                'toqq'   => $toqq,
+                'offset' => $offset,
+            ];
+            $this->query('/delMpzHistory', $params);
+            if ($this->ret_code === 0) {
+                return [
+                    'status' => 1,
+                    'msg'    => '清理成功',
+                    'data'   => json_decode($this->ret_data, true),
+                ];
+            } else {
+                return [
+                    'status' => 2,
+                    'msg'    => $this->ret_message,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'status' => 2,
+                'msg'    => $e->getMessage(),
+            ];
+        }
+    }
+    
+    /**
+     * 获取好友列表
+     *
+     * @param int $pack 是否用发包模式 0否
+     *
+     * @return array
+     */
+    public function getFriendList(int $pack = 1): array
+    {
+        try {
+            $params = [
+                'pack' => $pack,
+            ];
+            $this->query('/getFriendList', $params);
+            if ($this->ret_code === 0) {
+                return [
+                    'status' => 1,
+                    'msg'    => '获取成功',
+                    'data'   => json_decode($this->ret_data, true),
+                ];
+            } else {
+                return [
+                    'status' => 2,
+                    'msg'    => $this->ret_message,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'status' => 2,
+                'msg'    => $e->getMessage(),
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
@@ -1171,7 +1246,13 @@ class Dulu extends Common
         
         $json = $this->curl($url, post: json_encode($param), timeout: $this->timeout);
         if ($json) {
-            $arr               = json_decode($json, true);
+            $arr = json_decode($json, true);
+            // 处理控制符导致的解析错误
+            if (json_last_error() === JSON_ERROR_CTRL_CHAR) {
+                $json = parent::strip_control_characters($json);
+                $arr  = json_decode($json, true);
+            }
+            
             $this->ret_ok      = true;
             $this->ret_code    = $arr['code'];
             $this->ret_message = $arr['message'];

@@ -232,25 +232,16 @@ class Qy extends Common
      */
     public function checkOnline(): array
     {
-        $res = $this->query('/getClientkey'); // 失败返回json  成功返回32位字符串 访问超时返回空
-        if ($res) {
-            $arr = json_decode($res, true);
-            if ($arr) {
-                return [
-                    'status' => 2,
-                    'msg'    => '当前QQ不在线',
-                    'data'   => $arr,
-                ];
-            } else {
-                return [
-                    'status' => 1,
-                    'msg'    => $res,
-                ];
-            }
+        $clientkey = $this->getClientKey();
+        if ($clientkey['status'] === 1) {
+            return [
+                'status' => 1,
+                'msg'    => '在线中',
+            ];
         } else {
             return [
                 'status' => 2,
-                'msg'    => '访问接口超时',
+                'msg'    => '当前QQ不在线',
             ];
         }
     }
@@ -367,7 +358,7 @@ class Qy extends Common
         if ($json) {
             $arr = json_decode($json, true);
             if ($arr['code'] === 0) {
-                $str = $arr['data']['Clientkey'];
+                $str = $arr['data'];
                 if (str_starts_with($str, '{')) {
                     $sub_arr = json_decode($str, true);
                     return [
@@ -378,7 +369,7 @@ class Qy extends Common
                     return [
                         'status' => 1,
                         'msg'    => '成功',
-                        'data'   => $arr['data']['Clientkey'],
+                        'data'   => $arr['data'],
                     ];
                 }
             } else {
@@ -593,6 +584,9 @@ class Qy extends Common
             } elseif ($arr['retcode'] === 404) {
                 // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
                 $msg = "名片点赞{$num}次失败：自动更新已掉线";
+            } elseif ($arr['retcode'] === 20003) {
+                // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
+                $msg = $arr['retmsg'];
             } else {
                 $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
                 $msg    = "名片点赞{$num}次失败：{$retmsg}";
@@ -1145,8 +1139,10 @@ class Qy extends Common
     public function getMpzList(int $offset = 0): string
     {
         $param = [
-            'offset' => $offset,
-            'time'   => time(),
+            // time在后期可以删除了，因为不需要这个参数  还留着仅为兼容旧版插件考虑
+            'time'     => time(),
+            'offset'   => $offset,
+            'is_voter' => 1,
         ];
         
         return $this->query('/getMpzList', $param);
@@ -1189,6 +1185,77 @@ class Qy extends Common
             return [
                 'status' => 2,
                 'msg'    => $arr['retmsg'] ?? '过滤列表访问超时',
+            ];
+        }
+    }
+    
+    /**
+     * 删除名片赞列表的历史记录
+     *
+     * @param string|int $toqq   被删记录的QQ
+     * @param int        $offset 跳过多少条
+     *
+     * @return array
+     */
+    public function delMpzHistory(string|int $toqq = 0, int $offset = 450): array
+    {
+        $params = [
+            'toqq'   => $toqq,
+            'offset' => $offset,
+        ];
+        $json   = $this->query('/delMpzHistory', $params);
+        $arr    = json_decode($json, true);
+        if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '清理成功',
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['retmsg'] ?? '清理列表访问超时',
+            ];
+        }
+    }
+    
+    /**
+     * 获取好友列表
+     *
+     * @param int $pack 是否用发包模式 0否
+     *
+     * @return array
+     */
+    public function getFriendList(int $pack = 1): array
+    {
+        $params        = [
+            'pack' => $pack,
+        ];
+        $this->timeout = 30;
+        $json          = $this->query('/getFriendList', $params);
+        if ($json) {
+            $arr = json_decode($json, true);
+            // 处理控制符导致的解析错误
+            if (json_last_error() === JSON_ERROR_CTRL_CHAR) {
+                $json = parent::strip_control_characters($json);
+                $arr  = json_decode($json, true);
+            }
+            
+            if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+                return [
+                    'status' => 1,
+                    'msg'    => '获取成功',
+                    'data'   => $arr,
+                ];
+            } else {
+                return [
+                    'status' => 2,
+                    'msg'    => $arr['retmsg'] ?? '获取好友列表失败',
+                ];
+            }
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => '获取好友列表超时',
             ];
         }
     }
