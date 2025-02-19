@@ -1143,7 +1143,7 @@ class NapCat extends Common
         }
     }
     
-    public function getFriendList(int $pack = 1): array
+    public function getFriendList(int $pack = 1, int $next_id = 0, int $next_qq = 0): array
     {
         return [
             'status' => 2,

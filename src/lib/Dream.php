@@ -1068,10 +1068,12 @@ class Dream extends Common
      * 获取好友列表
      *
      * @param int $pack 是否用发包模式 0否
+     * @param int $next_id
+     * @param int $next_qq
      *
      * @return array
      */
-    public function getFriendList(int $pack = 1): array
+    public function getFriendList(int $pack = 1, int $next_id = 0, int $next_qq = 0): array
     {
         return [
             'status' => 2,
