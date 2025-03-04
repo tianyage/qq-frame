@@ -1,4 +1,11 @@
 <?php
+/** @noinspection HttpUrlsUsage */
+
+/** @noinspection PhpUnnecessaryCurlyVarSyntaxInspection */
+
+/** @noinspection DuplicatedCode */
+
+/** @noinspection PhpUnused */
 
 declare(strict_types=1);
 

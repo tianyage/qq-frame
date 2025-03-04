@@ -1,5 +1,13 @@
 <?php
 
+/** @noinspection HttpUrlsUsage */
+
+/** @noinspection PhpUnnecessaryCurlyVarSyntaxInspection */
+
+/** @noinspection DuplicatedCode */
+
+/** @noinspection PhpUnused */
+
 declare(strict_types=1);
 
 namespace Tianyage\QqFrame\lib;
@@ -268,8 +276,8 @@ class Dream extends Common
         if ($json) {
             $arr = json_decode($json, true);
             if (isset($arr['qr_id'])) {
-                $api_qrid  = $arr['qr_id'];
-                $api_error = $arr['error'] ?: '未知错误';
+                $api_qrid = $arr['qr_id'];
+                // $api_error = $arr['error'] ?: '未知错误';
                 if ($api_qrid === 3) {
                     // {"qr_id":3,"error":"扫码成功"}
                     $data = [
@@ -1032,7 +1040,7 @@ class Dream extends Common
         //        }
         //    ]
         //}
-        return $this->query('/getFriendFilterList', []);
+        return $this->query('/getFriendFilterList');
     }
     
     /**
@@ -1075,10 +1083,67 @@ class Dream extends Common
      */
     public function getFriendList(int $pack = 1, int $next_id = 0, int $next_qq = 0): array
     {
-        return [
-            'status' => 2,
-            'msg'    => '当前协议不支持此API',
+        $params        = [
+            'pack'    => $pack,
+            'next_id' => $next_id,
+            'next_qq' => $next_qq,
         ];
+        $this->timeout = 30;
+        $json          = $this->query('/getFriendList', $params);
+        if ($json) {
+            $arr = json_decode($json, true);
+            // 处理控制符导致的解析错误
+            if (json_last_error() === JSON_ERROR_CTRL_CHAR) {
+                $json = parent::strip_control_characters($json);
+                $arr  = json_decode($json, true);
+            }
+            
+            if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+                return [
+                    'status' => 1,
+                    'msg'    => '获取成功',
+                    'data'   => $arr,
+                ];
+            } else {
+                return [
+                    'status' => 2,
+                    'msg'    => $arr['retmsg'] ?? '获取好友列表失败',
+                ];
+            }
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => '获取好友列表超时',
+            ];
+        }
+    }
+    
+    /**
+     * QQ头像上传
+     *
+     * @param string $pic_base64
+     *
+     * @return array
+     */
+    public function uploadFace(string $pic_base64): array
+    {
+        $params = [
+            'pic' => $pic_base64,
+        ];
+        // {"retcode":0,"retmsg":"头像上传成功","time":"1741098990"}
+        $json = $this->query('/uploadFace', $params);
+        $arr  = json_decode($json, true);
+        if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '头像上传成功',
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['retmsg'] ?? '头像上传超时',
+            ];
+        }
     }
     
     /**

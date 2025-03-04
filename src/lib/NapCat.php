@@ -1,4 +1,11 @@
 <?php
+/** @noinspection HttpUrlsUsage */
+
+/** @noinspection PhpUnnecessaryCurlyVarSyntaxInspection */
+
+/** @noinspection DuplicatedCode */
+
+/** @noinspection PhpUnused */
 
 // napcat框架 https://doc.napneko.icu/develop/api
 
@@ -1144,6 +1151,21 @@ class NapCat extends Common
     }
     
     public function getFriendList(int $pack = 1, int $next_id = 0, int $next_qq = 0): array
+    {
+        return [
+            'status' => 2,
+            'msg'    => '当前协议不支持此API',
+        ];
+    }
+    
+    /**
+     * QQ头像上传
+     *
+     * @param string $pic_base64
+     *
+     * @return array
+     */
+    public function uploadFace(string $pic_base64): array
     {
         return [
             'status' => 2,

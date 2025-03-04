@@ -1,8 +1,17 @@
 <?php
+/** @noinspection HttpUrlsUsage */
+
+/** @noinspection PhpUnnecessaryCurlyVarSyntaxInspection */
+
+/** @noinspection DuplicatedCode */
+
+/** @noinspection PhpUnused */
 
 declare(strict_types=1);
 
 namespace Tianyage\QqFrame\lib;
+
+use Exception;
 
 class Qy extends Common
 {
@@ -392,7 +401,7 @@ class Qy extends Common
      * @param string $type 登录类型，例：qzone qzoneh5 qun vip ti ... (详细查看getLoginParams方法)
      *
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function getCookie(string $type): array
     {
@@ -427,7 +436,7 @@ class Qy extends Common
                     'pt4_token' => $pt4_token[1] ?? '',
                 ];
             } else {
-                throw new \Exception($this->robot_qq . ':cookie获取成功但解析失败');
+                throw new Exception($this->robot_qq . ':cookie获取成功但解析失败');
             }
         } else {
             $data = [
@@ -506,6 +515,7 @@ class Qy extends Common
                     }
                 } else {
                     if (function_exists('trace')) {
+                        /** @noinspection PhpUndefinedFunctionInspection */
                         trace($json . PHP_EOL, 'cardLike_qy');
                     }
                     
@@ -576,20 +586,23 @@ class Qy extends Common
         
         if ($json) {
             $arr = json_decode($json, true);
-            // 成功
-            if ($arr['retcode'] === 0) {
-                $msg = "名片点赞{$num}次成功";
-            } elseif ($arr['retcode'] === 1) {
-                $msg = "名片点赞{$num}次失败：TA不是你的好友";
-            } elseif ($arr['retcode'] === 404) {
-                // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
-                $msg = "名片点赞{$num}次失败：自动更新已掉线";
-            } elseif ($arr['retcode'] === 20003) {
-                // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
-                $msg = $arr['retmsg'];
-            } else {
-                $retmsg = $arr['retmsg'] ?: "手表协议风控中[{$arr['retcode']}]";
-                $msg    = "名片点赞{$num}次失败：{$retmsg}";
+            try {
+                // 成功
+                if ($arr['retcode'] === 0) {
+                    $msg = "名片点赞{$num}次成功";
+                } elseif ($arr['retcode'] === 1) {
+                    $msg = "TA不是你的好友";
+                } elseif ($arr['retcode'] === 404) {
+                    // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
+                    $msg = "自动更新已掉线";
+                } elseif ($arr['retcode'] === 20003) {
+                    // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
+                    $msg = $arr['retmsg'];
+                } else {
+                    $msg = "[{$arr['retcode']}]{$arr['retmsg']}";
+                }
+            } catch (Exception $e) {
+                $msg = "名片点赞提交失败：{$json}";
             }
         } else {
             $msg = "名片点赞{$num}次超时";
@@ -824,6 +837,7 @@ class Qy extends Common
      * @param bool $pack      是否需要自己发包 ，否为使用框架自身API (自己发包只能同意请求)
      *
      * @return string 不会有返回值
+     * @noinspection PhpUnusedParameterInspection
      */
     public function friendHandle(int $toqq, int $req, int $seq, int $oper_type, bool $pack = false): string
     {
@@ -1173,7 +1187,7 @@ class Qy extends Common
      */
     public function getFriendFilterList(): array
     {
-        $json = $this->query('/getFriendFilterList', []);
+        $json = $this->query('/getFriendFilterList');
         $arr  = json_decode($json, true);
         if (isset($arr['retcode']) && $arr['retcode'] === 0) {
             return [
@@ -1260,6 +1274,34 @@ class Qy extends Common
             return [
                 'status' => 2,
                 'msg'    => '获取好友列表超时',
+            ];
+        }
+    }
+    
+    /**
+     * QQ头像上传
+     *
+     * @param string $pic_base64
+     *
+     * @return array
+     */
+    public function uploadFace(string $pic_base64): array
+    {
+        $params = [
+            'pic' => $pic_base64,
+        ];
+        // {"retcode":0,"retmsg":"头像上传成功","time":"1741098990"}
+        $json = $this->query('/uploadFace', $params);
+        $arr  = json_decode($json, true);
+        if (isset($arr['retcode']) && $arr['retcode'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '头像上传成功',
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['retmsg'] ?? '头像上传超时',
             ];
         }
     }
