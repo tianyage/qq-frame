@@ -1165,7 +1165,7 @@ class NapCat extends Common
      *
      * @return array
      */
-    public function uploadFace(string $pic_base64): array
+    public function uploadAvatar(string $pic_base64): array
     {
         return [
             'status' => 2,

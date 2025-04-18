@@ -1125,13 +1125,13 @@ class Dream extends Common
      *
      * @return array
      */
-    public function uploadFace(string $pic_base64): array
+    public function uploadAvatar(string $pic_base64): array
     {
         $params = [
             'pic' => $pic_base64,
         ];
         // {"retcode":0,"retmsg":"头像上传成功","time":"1741098990"}
-        $json = $this->query('/uploadFace', $params);
+        $json = $this->query('/uploadAvatar', $params);
         $arr  = json_decode($json, true);
         if (isset($arr['retcode']) && $arr['retcode'] === 0) {
             return [

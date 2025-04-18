@@ -598,6 +598,9 @@ class Qy extends Common
                 } elseif ($arr['retcode'] === 20003) {
                     // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
                     $msg = $arr['retmsg'];
+                } elseif ($arr['retcode'] === 10003) {
+                    // 由于对方权限设置，点赞失败
+                    $msg = $arr['retmsg'];
                 } else {
                     $msg = "[{$arr['retcode']}]{$arr['retmsg']}";
                 }
@@ -780,6 +783,18 @@ class Qy extends Common
                 $data = [
                     'status' => 2,
                     'msg'    => '发送失败，群内被禁言',
+                ];
+            } elseif ($arr['retcode'] === 405) {
+                // 该框架QQ未登录
+                $data = [
+                    'status' => 2,
+                    'msg'    => '发送失败，服务器初始化中',
+                ];
+            } elseif ($arr['retcode'] === 404) {
+                // {"retcode":404,"retmsg":"未在框架找到对应QQ","time":"1744475326"}
+                $data = [
+                    'status' => 2,
+                    'msg'    => '发送失败，已不在线',
                 ];
             } else {
                 $data = [
@@ -1285,13 +1300,13 @@ class Qy extends Common
      *
      * @return array
      */
-    public function uploadFace(string $pic_base64): array
+    public function uploadAvatar(string $pic_base64): array
     {
         $params = [
             'pic' => $pic_base64,
         ];
         // {"retcode":0,"retmsg":"头像上传成功","time":"1741098990"}
-        $json = $this->query('/uploadFace', $params);
+        $json = $this->query('/uploadAvatar', $params);
         $arr  = json_decode($json, true);
         if (isset($arr['retcode']) && $arr['retcode'] === 0) {
             return [

@@ -492,6 +492,9 @@ class Dulu extends Common
             } elseif ($this->ret_code === 20003) {
                 // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
                 $msg = $this->ret_message;
+            } elseif ($this->ret_code === 10003) {
+                // 由于对方权限设置，点赞失败
+                $msg = '由于对方权限设置，点赞失败';
             } else {
                 $msg = "{$this->ret_message}[{$this->ret_code}]";
             }
