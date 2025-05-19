@@ -1322,6 +1322,23 @@ class Qy extends Common
     }
     
     /**
+     * 消息框置顶
+     *
+     * @param int|string $toqq
+     * @param bool       $cancel 取消置顶 默认否
+     *
+     * @return string
+     */
+    public function msgTop(int|string $toqq, bool $cancel = false): string
+    {
+        $param = [
+            'toqq'   => $toqq,
+            'cancel' => $cancel,
+        ];
+        return $this->query('/msgTop', $param);
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
