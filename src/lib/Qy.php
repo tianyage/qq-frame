@@ -1325,17 +1325,41 @@ class Qy extends Common
      * 消息框置顶
      *
      * @param int|string $toqq
-     * @param bool       $cancel 取消置顶 默认否
+     * @param bool       $is_cancel 取消置顶 默认否
      *
      * @return string
      */
-    public function msgTop(int|string $toqq, bool $cancel = false): string
+    public function msgTop(int|string $toqq, bool $is_cancel = false): string
     {
         $param = [
-            'toqq'   => $toqq,
-            'cancel' => $cancel,
+            'toqq'      => $toqq,
+            'is_cancel' => $is_cancel,
         ];
         return $this->query('/msgTop', $param);
+    }
+    
+    /**
+     * 消息回应表情
+     * 贴表情
+     *
+     * @param int  $group     群号
+     * @param int  $seq       消息ID
+     * @param int  $bqid      表情Id emoji转为10进制
+     * @param bool $is_emoji  是否emoji表情
+     * @param bool $is_cancel 是否取消表情
+     *
+     * @return string
+     */
+    public function replyEmoji(int $group, int $seq, int $bqid, bool $is_emoji, bool $is_cancel = false): string
+    {
+        $param = [
+            'group'     => $group,
+            'seq'       => $seq,
+            'bqid'      => $bqid,
+            'is_emoji'  => $is_emoji,
+            'is_cancel' => $is_cancel,
+        ];
+        return $this->query('/replyEmoji', $param);
     }
     
     /**
