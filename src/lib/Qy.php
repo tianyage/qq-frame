@@ -363,25 +363,35 @@ class Qy extends Common
     {
         $param = [
         ];
-        $json  = $this->query('/getClientKey', $param);
+        $json  = $this->query('/getClientkey', $param);
+        // {"code":0,"message":"获取成功","data":"EF7BFA728092AB3FF4CD5BA45F57DF163480D95F2448807054E5D0A57CF05C2EF3A1DA04DC07A99AD746269E6FE511C6905ED4E1050012795D26D6A28DA135CE","echo":""}
         if ($json) {
             $arr = json_decode($json, true);
-            if ($arr['code'] === 0) {
-                $str = $arr['data'];
-                if (str_starts_with($str, '{')) {
-                    $sub_arr = json_decode($str, true);
+            if (isset($arr['code']) && $arr['code'] === 0) {
+                $sub_data = $arr['data'];
+                if (is_array($sub_data)) {
                     return [
                         'status' => 2,
-                        'msg'    => '获取clientkey失败：' . ($sub_arr['retmsg'] ?? $str),
+                        'msg'    => '获取clientkey失败：' . $sub_data['retmsg'],
+                    ];
+                } elseif (str_starts_with($sub_data, '{')) {
+                    $sub_arr = json_decode($sub_data, true);
+                    return [
+                        'status' => 2,
+                        'msg'    => '获取clientkey失败：' . ($sub_arr['retmsg'] ?? $sub_data),
                     ];
                 } else {
                     return [
                         'status' => 1,
                         'msg'    => '成功',
-                        'data'   => $arr['data'],
+                        'data'   => $sub_data,
                     ];
                 }
             } else {
+                if (function_exists('trace')) {
+                    /** @noinspection PhpUndefinedFunctionInspection */
+                    trace($json, 'getClientkey_xlz');
+                }
                 return [
                     'status' => 2,
                     'msg'    => '获取clientkey失败',

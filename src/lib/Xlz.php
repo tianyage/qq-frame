@@ -367,18 +367,23 @@ class Xlz extends Common
         if ($json) {
             $arr = json_decode($json, true);
             if (isset($arr['code']) && $arr['code'] === 0) {
-                $str = $arr['data'];
-                if (str_starts_with($str, '{')) {
-                    $sub_arr = json_decode($str, true);
+                $sub_data = $arr['data'];
+                if (is_array($sub_data)) {
                     return [
                         'status' => 2,
-                        'msg'    => '获取clientkey失败：' . ($sub_arr['retmsg'] ?? $str),
+                        'msg'    => '获取clientkey失败：' . $sub_data['retmsg'],
+                    ];
+                } elseif (str_starts_with($sub_data, '{')) {
+                    $sub_arr = json_decode($sub_data, true);
+                    return [
+                        'status' => 2,
+                        'msg'    => '获取clientkey失败：' . ($sub_arr['retmsg'] ?? $sub_data),
                     ];
                 } else {
                     return [
                         'status' => 1,
                         'msg'    => '成功',
-                        'data'   => $arr['data'],
+                        'data'   => $sub_data,
                     ];
                 }
             } else {
