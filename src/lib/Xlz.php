@@ -363,6 +363,7 @@ class Xlz extends Common
         $param = [
         ];
         $json  = $this->query('/getClientkey', $param);
+        // {"code":0,"message":"获取成功","data":"EF7BFA728092AB3FF4CD5BA45F57DF163480D95F2448807054E5D0A57CF05C2EF3A1DA04DC07A99AD746269E6FE511C6905ED4E1050012795D26D6A28DA135CE","echo":""}
         if ($json) {
             $arr = json_decode($json, true);
             if (isset($arr['code']) && $arr['code'] === 0) {
@@ -631,10 +632,11 @@ class Xlz extends Common
                         ];
                     } elseif ($arr['retcode'] === -1) {
                         // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
+                        // {"retcode":-1,"retmsg":"获取消息签名失败","time":"0"}
                         // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
                         $data = [
                             'status' => -2,
-                            'msg'    => '发送数据包失败，对方QQ不存在',
+                            'msg'    => $arr['retmsg'] ?? '发送数据包失败，对方QQ不存在',
                         ];
                     } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
                         // {"retcode":1,"retmsg":"","time":"1714973481"}
@@ -1320,6 +1322,176 @@ class Xlz extends Common
             'is_cancel' => $is_cancel,
         ];
         return $this->query('/replyEmoji', $param);
+    }
+    
+    /**
+     * 设置群聊专属头衔
+     *
+     * @param int    $group 群号
+     * @param int    $toqq
+     * @param string $title 头衔,支持emoji
+     *
+     * @return string
+     */
+    public function groupExclusiveTitle(int $group, int $toqq, string $title): string
+    {
+        $param = [
+            'group' => $group,
+            'toqq'  => $toqq,
+            'title' => $title,
+        ];
+        return $this->query('/groupExclusiveTitle', $param);
+    }
+    
+    /**
+     * 获取小游戏的openkey和openid以及access_token
+     *
+     * @return array
+     */
+    public function getGameLoginParams(): array
+    {
+        $param = [];
+        $json  = $this->query('/getGameLoginParams', $param);
+        // {"code":0,"message":"游戏登录参数获取成功","data":{"openid":"C67A514B50AE52415CA9CF4366CBA553","access_token":"90049939C766365E600DED0309663E12","openkey":"B1odXkqCCs85TlvZGomTbw=="},"echo":""}
+        $arr = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => '获取失败，访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '获取成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? '获取失败',
+            ];
+        }
+    }
+    
+    /**
+     * qq秀换装
+     *
+     * @return array
+     */
+    public function speedQQShow(): array
+    {
+        $param = [];
+        $json  = $this->query('/speedQQShow', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => 'qq秀换装失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => 'qq秀换装成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? 'qq秀换装失败：未知错误',
+            ];
+        }
+    }
+    
+    /**
+     * 空间盲盒签到
+     *
+     * @return array
+     */
+    public function speedManghe(): array
+    {
+        $param = [];
+        $json  = $this->query('/speedManghe', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => '空间盲盒签到失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '空间盲盒签到成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? '空间盲盒签到失败：未知错误',
+            ];
+        }
+    }
+    
+    /**
+     * 空间好友动态浏览十条
+     *
+     * @return array
+     */
+    public function speedQzoneBrowse(): array
+    {
+        $param = [];
+        $json  = $this->query('/speedQzoneBrowse', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => '空间浏览动态失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '空间浏览动态成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? '空间浏览动态失败：未知错误',
+            ];
+        }
+    }
+    
+    /**
+     * 天天领福利，赚金豆兑好礼
+     *
+     * @return array
+     */
+    public function speedJindou(): array
+    {
+        $param = [];
+        $json  = $this->query('/speedJindou', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => '金豆加速失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '金豆加速成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? '金豆加速失败：未知错误',
+            ];
+        }
     }
     
     /**
