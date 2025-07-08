@@ -213,7 +213,7 @@ class Dream extends Common
     
     public function getClientKey(): array
     {
-        $res = $this->query('/getClientkey'); // 失败返回offline  成功返回[Clientkey字符串]
+        $res = $this->query('/getClientKey'); // 失败返回offline  成功返回[Clientkey字符串]
         if ($res) {
             if ($res === 'offline') {
                 return [
@@ -242,7 +242,7 @@ class Dream extends Common
      */
     public function checkOnline(): array
     {
-        $res = $this->query('/getClientkey'); // 失败返回offline  成功返回[Clientkey字符串]
+        $res = $this->query('/getClientKey'); // 失败返回offline  成功返回[Clientkey字符串]
         if ($res) {
             if ($res === 'offline') {
                 return [

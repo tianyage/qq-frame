@@ -363,8 +363,8 @@ class Qy extends Common
     {
         $param = [
         ];
-        $json  = $this->query('/getClientkey', $param);
-        // {"code":0,"message":"获取成功","data":"EF7BFA728092AB3FF4CD5BA45F57DF163480D95F2448807054E5D0A57CF05C2EF3A1DA04DC07A99AD746269E6FE511C6905ED4E1050012795D26D6A28DA135CE","echo":""}
+        $json  = $this->query('/getClientKey', $param);
+        // {"code":0,"message":"获取成功","data":"3DFC9E296DD97E552B0CEAB371432F517DE0579C73268BDBD70093D3C475B1A8466F71E42D3074DAA33C83D78762276273B391D0654EE83A1442D0934C8A583A","echo":""}
         if ($json) {
             $arr = json_decode($json, true);
             if (isset($arr['code']) && $arr['code'] === 0) {
@@ -390,11 +390,11 @@ class Qy extends Common
             } else {
                 if (function_exists('trace')) {
                     /** @noinspection PhpUndefinedFunctionInspection */
-                    trace($json, 'getClientkey_xlz');
+                    trace($json, 'getClientKey_qy');
                 }
                 return [
                     'status' => 2,
-                    'msg'    => '获取clientkey失败',
+                    'msg'    => '获取clientkey失败，' . $json,
                 ];
             }
         } else {

@@ -233,7 +233,7 @@ class Dulu extends Common
      */
     public function getClientKey(): array
     {
-        $this->query('/getClientkey');
+        $this->query('/getClientKey');
         if ($this->ret_code === 0) {
             $data = [
                 'status' => 1,
@@ -258,7 +258,7 @@ class Dulu extends Common
      */
     public function checkOnline(): array
     {
-        $this->query('/getClientkey');
+        $this->query('/getClientKey');
         if ($this->ret_code === 0) {
             $data = [
                 'status' => 1,

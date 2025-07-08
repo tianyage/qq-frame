@@ -362,7 +362,7 @@ class Xlz extends Common
     {
         $param = [
         ];
-        $json  = $this->query('/getClientkey', $param);
+        $json  = $this->query('/getClientKey', $param);
         // {"code":0,"message":"获取成功","data":"EF7BFA728092AB3FF4CD5BA45F57DF163480D95F2448807054E5D0A57CF05C2EF3A1DA04DC07A99AD746269E6FE511C6905ED4E1050012795D26D6A28DA135CE","echo":""}
         if ($json) {
             $arr = json_decode($json, true);
@@ -389,11 +389,11 @@ class Xlz extends Common
             } else {
                 if (function_exists('trace')) {
                     /** @noinspection PhpUndefinedFunctionInspection */
-                    trace($json, 'getClientkey_xlz');
+                    trace($json, 'getClientKey_xlz');
                 }
                 return [
                     'status' => 2,
-                    'msg'    => '获取clientkey失败',
+                    'msg'    => '获取clientkey失败，' . $json,
                 ];
             }
         } else {
