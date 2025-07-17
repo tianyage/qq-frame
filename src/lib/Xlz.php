@@ -1502,6 +1502,36 @@ class Xlz extends Common
     }
     
     /**
+     * 空间AI妙绘
+     *
+     * @return array
+     */
+    public function speedAI(): array
+    {
+        $param = [];
+        $json  = $this->query('/speedAI', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => 'AI妙绘失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => 'AI妙绘成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? 'AI妙绘失败：未知错误',
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
