@@ -424,21 +424,25 @@ class Dream extends Common
      * 名片赞2
      * （发功能包版，一次性点赞，可以减少接口访问次数了）
      *
-     * @param string|int $toqq 对方QQ
-     * @param int        $num  点赞次数 默认1
-     * @param int        $type 点赞类型 1好友 27随心贴陌生人（好像无效）  31搜索QQ（好像无效）  5群友  12我赞过谁  41附近的人 66点赞列表
+     * @param string|int $toqq       对方QQ
+     * @param int        $num        点赞次数 默认1
+     * @param int        $type       点赞类型 1好友 27随心贴陌生人（好像无效）  31搜索QQ（好像无效）  5群友  12我赞过谁  41附近的人 66点赞列表
+     * @param bool       $del_record 是否删除本次点赞记录
      *
      * @return string
      */
-    public function cardLike2(string|int $toqq, int $num = 1, int $type = 1): string
+    public function cardLike2(string|int $toqq, int $num = 1, int $type = 1, bool $del_record = false): string
     {
+        // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
+        
         $num = max($num, 1); // 最少1赞
         $num = min($num, 20); // 最多20赞
         
         $json = $this->query('/cardLike2', [
-            'toqq' => $toqq,
-            'num'  => $num,
-            'type' => $type,
+            'toqq'       => $toqq,
+            'num'        => $num,
+            'type'       => $type,
+            'del_record' => $del_record,
         ]);
         
         if ($json) {
@@ -1388,6 +1392,22 @@ class Dream extends Common
                 'msg'    => $arr['message'] ?? 'AI妙绘失败：未知错误',
             ];
         }
+    }
+    
+    /**
+     * 查询某qq的名片赞数量
+     *
+     * @param int|string $toqq
+     *
+     * @return string json内容: retcode retmsg data
+     */
+    public function queryCardLikeCount(int|string $toqq): string
+    {
+        $param = [
+            'toqq' => $toqq,
+        ];
+        
+        return $this->query('/queryCardLikeCount', $param);
     }
     
     
