@@ -366,6 +366,8 @@ class Xlz extends Common
         ];
         $json  = $this->query('/getClientKey', $param);
         // {"code":0,"message":"获取成功","data":"EF7BFA728092AB3FF4CD5BA45F57DF163480D95F2448807054E5D0A57CF05C2EF3A1DA04DC07A99AD746269E6FE511C6905ED4E1050012795D26D6A28DA135CE","echo":""}
+        // {"code":0,"message":"获取成功","data":{"retcode":405,"retmsg":"该框架QQ未登录","time":"1753029539"},"echo":""}
+        // {"code":0,"message":"获取成功","data":{"retcode":404,"retmsg":"未在框架找到对应QQ","time":"1753030118"},"echo":""}
         if ($json) {
             $arr = json_decode($json, true);
             if (isset($arr['code']) && $arr['code'] === 0) {
@@ -944,13 +946,15 @@ class Xlz extends Common
      * 登录指定QQ （需要先添加QQ）
      *
      * @param int|string $qq
+     * @param bool       $quick 是否执行二次登录
      *
      * @return array
      */
-    public function login(int|string $qq): array
+    public function login(int|string $qq, bool $quick = false): array
     {
         $param = [
-            'qq' => $qq,
+            'qq'    => $qq,
+            'quick' => $quick,
         ];
         $ret   = $this->query('/login', $param);
         if ($ret) {
