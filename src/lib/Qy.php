@@ -893,15 +893,19 @@ class Qy extends Common
      * @param int|string $qq       QQ号
      * @param string     $pwd      密码
      * @param int        $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ,19鸿蒙HD,20LiteQQ
+     * @param string     $brand    手机品牌（XIAOMI）
+     * @param string     $model    手机型号（14pro）
      *
      * @return string
      */
-    public function add(int|string $qq, string $pwd, int $protocol): string
+    public function add(int|string $qq, string $pwd, int $protocol, string $brand = '', string $model = ''): string
     {
         $param = [
             'qq'       => $qq,
             'pwd'      => $pwd,
             'protocol' => $protocol,
+            'brand'    => $brand,
+            'model'    => $model,
         ];
         return $this->query('/add', $param);
     }
@@ -1503,15 +1507,50 @@ class Qy extends Common
      *
      * @param int|string $toqq
      *
-     * @return string json内容: retcode retmsg data
+     * @return array
      */
-    public function queryCardLikeCount(int|string $toqq): string
+    public function queryCardLikeCount(int|string $toqq): array
     {
         $param = [
             'toqq' => $toqq,
         ];
+        // {"retcode":0,"retmsg":"查询完成","data":55971}
+        // {"retcode":202,"retmsg":"查询完成","data":0} qq资料卡无法被查看（不一定是冻结）
+        // {"retcode":-1,"retmsg":"发包失败"}
+        $json = $this->query('/queryCardLikeCount', $param);
+        if (!$json) {
+            return [
+                'status' => 2,
+                'msg'    => '查询失败，接口访问超时',
+            ];
+        }
+        $arr = json_decode($json, true);
+        if (!isset($arr['retcode'])) {
+            return [
+                'status' => 2,
+                'msg'    => '查询失败，接口返回数据错误',
+            ];
+        }
         
-        return $this->query('/queryCardLikeCount', $param);
+        if ($arr['retcode'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '查询成功',
+                'data'   => $arr['data'],
+            ];
+        } elseif ($arr['retcode'] === 202) {
+            return [
+                'status' => 202,
+                'msg'    => '资料卡无法被查看',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['retcode'],
+                'msg'    => $arr['retmsg'] ?? '查询失败，未知错误',
+                'data'   => $arr['data'] ?? null,
+            ];
+        }
     }
     
     /**
