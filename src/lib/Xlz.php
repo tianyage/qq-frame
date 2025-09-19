@@ -526,26 +526,25 @@ class Xlz extends Common
         
         if ($json) {
             $arr = json_decode($json, true);
-            try {
-                // 成功
-                if ($arr['retcode'] === 0) {
-                    $msg = "名片点赞{$num}次成功";
-                } elseif ($arr['retcode'] === 1) {
-                    $msg = "TA不是你的好友";
-                } elseif ($arr['retcode'] === 404) {
-                    // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
-                    $msg = "自动更新已掉线";
-                } elseif ($arr['retcode'] === 20003) {
-                    // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
-                    $msg = $arr['retmsg'];
-                } elseif ($arr['retcode'] === 10003) {
-                    // 由于对方权限设置，点赞失败
-                    $msg = $arr['retmsg'];
-                } else {
-                    $msg = "[{$arr['retcode']}]{$arr['retmsg']}";
-                }
-            } catch (Exception $e) {
-                $msg = "名片点赞提交失败：{$json}";
+            if (!$arr || !isset($arr['retcode'])) {
+                return "名片点赞提交失败：{$json}";
+            }
+            // 成功
+            if ($arr['retcode'] === 0) {
+                $msg = "名片点赞{$num}次成功";
+            } elseif ($arr['retcode'] === 1) {
+                $msg = "TA不是你的好友";
+            } elseif ($arr['retcode'] === 404) {
+                // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
+                $msg = "自动更新已掉线";
+            } elseif ($arr['retcode'] === 20003) {
+                // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
+                $msg = $arr['retmsg'];
+            } elseif ($arr['retcode'] === 10003) {
+                // 由于对方权限设置，点赞失败
+                $msg = $arr['retmsg'];
+            } else {
+                $msg = "[{$arr['retcode']}]{$arr['retmsg']}";
             }
         } else {
             $msg = "名片点赞{$num}次超时";
@@ -1589,6 +1588,36 @@ class Xlz extends Common
                 'status' => $arr['retcode'],
                 'msg'    => $arr['retmsg'] ?? '查询失败，未知错误',
                 'data'   => $arr['data'] ?? null,
+            ];
+        }
+    }
+    
+    /**
+     * 看免费小说
+     *
+     * @return array
+     */
+    public function speedXiaoshuo(): array
+    {
+        $param = [];
+        $json  = $this->query('/speedXiaoshuo', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => '看小说加速失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '看小说加速成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? '看小说加速失败：未知错误',
             ];
         }
     }

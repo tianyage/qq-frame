@@ -1435,6 +1435,35 @@ class Dream extends Common
         }
     }
     
+    /**
+     * 看免费小说
+     *
+     * @return array
+     */
+    public function speedXiaoshuo(): array
+    {
+        $param = [];
+        $json  = $this->query('/speedXiaoshuo', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => '看小说加速失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '看小说加速成功',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? '看小说加速失败：未知错误',
+            ];
+        }
+    }
     
     /**
      * 提交数据
