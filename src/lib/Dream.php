@@ -1466,6 +1466,36 @@ class Dream extends Common
     }
     
     /**
+     * 同意过滤好友的申请
+     *
+     * @return array
+     */
+    public function agreeFriendFilter(): array
+    {
+        $param = [];
+        $json  = $this->query('/agreeFriendFilter', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => '同意失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '同意过滤好友完成',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? '同意过滤好友失败：未知错误',
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
