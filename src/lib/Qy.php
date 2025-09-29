@@ -1589,11 +1589,13 @@ class Qy extends Common
     /**
      * 同意过滤好友的申请
      *
+     * @param string|int $toqq 对方QQ
+     *
      * @return array
      */
-    public function agreeFriendFilter(): array
+    public function agreeFriendFilter(string|int $toqq): array
     {
-        $param = [];
+        $param = ['toqq' => $toqq];
         $json  = $this->query('/agreeFriendFilter', $param);
         $arr   = json_decode($json, true);
         if (!$arr) {
