@@ -790,10 +790,11 @@ class Dream extends Common
      * @param int        $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
      * @param string     $brand
      * @param string     $model
+     * @param string     $guid
      *
      * @return string
      */
-    public function add(int|string $qq, string $pwd, int $protocol, string $brand = '', string $model = ''): string
+    public function add(int|string $qq, string $pwd, int $protocol, string $brand = '', string $model = '', string $guid = ''): string
     {
         $param = [
             'qq'       => $qq,
@@ -801,6 +802,7 @@ class Dream extends Common
             'protocol' => $protocol,
             'brand'    => $brand,
             'model'    => $model,
+            'guid'     => $guid,
         ];
         return $this->query('/add', $param);
     }

@@ -65,7 +65,7 @@ class Xlz extends Common
         '框架事件_主动下线' => 1000,
         
         '消息类型_好友通常消息' => 166,
-        '消息类型_群聊消息'     => 82,
+        '消息类型_群聊消息'     => 134,
         '消息类型_临时会话'     => 141,
     ];
     
@@ -933,10 +933,11 @@ class Xlz extends Common
      * @param int        $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
      * @param string     $brand    手机品牌（XIAOMI）
      * @param string     $model    手机型号（14pro）
+     * @param string     $guid     设备码
      *
      * @return string
      */
-    public function add(int|string $qq, string $pwd, int $protocol, string $brand = '', string $model = ''): string
+    public function add(int|string $qq, string $pwd, int $protocol, string $brand = '', string $model = '', string $guid = ''): string
     {
         $param = [
             'qq'       => $qq,
@@ -944,6 +945,7 @@ class Xlz extends Common
             'protocol' => $protocol,
             'brand'    => $brand,
             'model'    => $model,
+            'guid'     => $guid,
         ];
         return $this->query('/add', $param);
     }

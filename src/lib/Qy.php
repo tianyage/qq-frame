@@ -898,10 +898,11 @@ class Qy extends Common
      * @param int        $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ,19鸿蒙HD,20LiteQQ
      * @param string     $brand    手机品牌（XIAOMI）
      * @param string     $model    手机型号（14pro）
+     * @param string     $guid
      *
      * @return string
      */
-    public function add(int|string $qq, string $pwd, int $protocol, string $brand = '', string $model = ''): string
+    public function add(int|string $qq, string $pwd, int $protocol, string $brand = '', string $model = '', string $guid = ''): string
     {
         $param = [
             'qq'       => $qq,
@@ -909,6 +910,7 @@ class Qy extends Common
             'protocol' => $protocol,
             'brand'    => $brand,
             'model'    => $model,
+            'guid'     => $guid,
         ];
         return $this->query('/add', $param);
     }
