@@ -1500,6 +1500,38 @@ class Dream extends Common
     }
     
     /**
+     * 查询空间资料（获取访客数）
+     *
+     * @param string|int $toqq 对方QQ
+     *
+     * @return array
+     */
+    public function getQzoneProfile(string|int $toqq): array
+    {
+        $param = ['toqq' => $toqq];
+        $json  = $this->query('/getQzoneProfile', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr) {
+            return [
+                'status' => 2,
+                'msg'    => '查询空间资料失败：访问超时',
+            ];
+        }
+        if (isset($arr['code']) && $arr['code'] === 0) {
+            return [
+                'status' => 1,
+                'msg'    => '查询空间资料完成',
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['message'] ?? '查询空间资料失败：未知错误',
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
