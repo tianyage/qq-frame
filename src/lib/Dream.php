@@ -1500,7 +1500,8 @@ class Dream extends Common
     }
     
     /**
-     * 查询空间资料（获取访客数）
+     * 查询空间资料（⚠️⚠️⚠️ 访问多了会导致QQ冻结）
+     * （获取访客数，没开启访客的查看权限也可查到，只要能进入空间的就行）
      *
      * @param string|int $toqq 对方QQ
      *
@@ -1510,22 +1511,37 @@ class Dream extends Common
     {
         $param = ['toqq' => $toqq];
         $json  = $this->query('/getQzoneProfile', $param);
-        $arr   = json_decode($json, true);
-        if (!$arr) {
+        // {"code":0,"message":"空间资料查询成功","data":{"qzone_type":2,"visitor_today":916,"visitor_total":3560585},"echo":""}
+        // {"code":0,"message":"空间资料查询成功","data":{"qzone_type":0,"visitor_today":0,"visitor_total":0},"echo":""}
+        // {"code":0,"message":"空间资料查询成功","data":{"qzone_type":9,"visitor_today":0,"visitor_total":0},"echo":""}
+        
+        // qzone_type  0正常（自己看自己） 1、2正常（自己看别人）  5空间有设权限无法访问  6空间有权限（回答问题后访问）  8未开通空间  9空间封禁(您访问的空间被多名用户举报，暂时无法查看。)
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
             return [
-                'status' => 2,
+                'status' => -1,
                 'msg'    => '查询空间资料失败：访问超时',
             ];
         }
-        if (isset($arr['code']) && $arr['code'] === 0) {
+        if ($arr['code'] === 0) { // 返回正常
+            $qzone_data = $arr['data']; // 取数据
+            // 空间访问数量为0，则代表空间无法访问（即便能访问，也将访问量为0的定义为无法访问）
+            if ($qzone_data['visitor_total'] === 0) {
+                return [
+                    'status' => -4009,
+                    'code'   => $qzone_data['qzone_type'],
+                    'msg'    => "空间无权限访问[{$qzone_data['qzone_type']}]",
+                ];
+            }
+            
             return [
                 'status' => 1,
                 'msg'    => '查询空间资料完成',
-                'data'   => $arr['data'],
+                'data'   => $qzone_data,
             ];
         } else {
             return [
-                'status' => 2,
+                'status' => $arr['code'],
                 'msg'    => $arr['message'] ?? '查询空间资料失败：未知错误',
             ];
         }

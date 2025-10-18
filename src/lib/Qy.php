@@ -540,6 +540,9 @@ class Qy extends Common
                 } elseif ($arr['retcode'] === 10003) {
                     // 由于对方权限设置，点赞失败
                     $msg = $arr['retmsg'];
+                } elseif ($arr['retcode'] === 54) { // 例如3009494925，应该是QQ号不存在
+                    // 该 QQ 号禁止点赞
+                    $msg = $arr['retmsg'];
                 } else {
                     $msg = "[{$arr['retcode']}]{$arr['retmsg']}";
                 }
@@ -629,28 +632,60 @@ class Qy extends Common
         if ($json) {
             $arr = json_decode($json, true);
             if ($arr) {
-                if ($arr['retcode'] === 0) {
-                    $data = [
-                        'status' => 1,
-                        'msg'    => '发送成功',
-                        'time'   => $arr['time'],
-                    ];
-                } elseif ($arr['retcode'] === 16) {
-                    $data = [
-                        'status' => 3,
-                        'msg'    => '对方不是你的好友',
-                    ];
-                } elseif ($arr['retcode'] === 405) {
-                    // [405]该框架QQ未登录
-                    $data = [
-                        'status' => -1,
-                        'msg'    => 'QQ目前离线中',
-                    ];
-                } else {
+                try {
+                    if ($arr['retcode'] === 0) {
+                        $data = [
+                            'status' => 1,
+                            'msg'    => '发送成功',
+                            'time'   => $arr['time'],
+                        ];
+                    } elseif ($arr['retcode'] === 16) {
+                        $data = [
+                            'status' => 3,
+                            'msg'    => '对方不是你的好友',
+                        ];
+                    } elseif ($arr['retcode'] === -1) {
+                        // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
+                        // {"retcode":-1,"retmsg":"获取消息签名失败","time":"0"}
+                        // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
+                        $data = [
+                            'status' => -2,
+                            'msg'    => $arr['retmsg'] ?? '发送数据包失败，对方QQ不存在',
+                        ];
+                    } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
+                        // {"retcode":1,"retmsg":"","time":"1714973481"}
+                        $data = [
+                            'status' => 4,
+                            'msg'    => '发送完成，但消息疑似被屏蔽',
+                            'time'   => $arr['time'],
+                        ];
+                    } elseif ($arr['retcode'] === 405) {
+                        // [405]该框架QQ未登录
+                        $data = [
+                            'status' => -3,
+                            'msg'    => 'QQ目前离线中',
+                        ];
+                    } elseif ($arr['retcode'] === 404) {
+                        // [404]未在框架找到对应QQ
+                        $data = [
+                            'status' => 404,
+                            'msg'    => 'QQ已不存在',
+                        ];
+                    } else {
+                        $data = [
+                            'status' => 2,
+                            'msg'    => $json,
+                        ];
+                    }
+                } catch (Exception $e) {
                     $data = [
                         'status' => 2,
-                        'msg'    => "[{$arr['retcode']}]" . ($arr['retmsg'] ?? '未知错误'),
+                        'msg'    => '消息发送失败',
                     ];
+                    if (function_exists('trace')) {
+                        /** @noinspection PhpUndefinedFunctionInspection */
+                        trace($json . PHP_EOL, 'sendFriendMsg_qy');
+                    }
                 }
             } else {
                 $data = [
@@ -1621,7 +1656,8 @@ class Qy extends Common
     }
     
     /**
-     * 查询空间资料（获取访客数）
+     * 查询空间资料（⚠️⚠️⚠️ 访问多了会导致QQ冻结）
+     * （获取访客数，没开启访客的查看权限也可查到，只要能进入空间的就行）
      *
      * @param string|int $toqq 对方QQ
      *
@@ -1631,22 +1667,37 @@ class Qy extends Common
     {
         $param = ['toqq' => $toqq];
         $json  = $this->query('/getQzoneProfile', $param);
-        $arr   = json_decode($json, true);
-        if (!$arr) {
+        // {"code":0,"message":"空间资料查询成功","data":{"qzone_type":2,"visitor_today":916,"visitor_total":3560585},"echo":""}
+        // {"code":0,"message":"空间资料查询成功","data":{"qzone_type":0,"visitor_today":0,"visitor_total":0},"echo":""}
+        // {"code":0,"message":"空间资料查询成功","data":{"qzone_type":9,"visitor_today":0,"visitor_total":0},"echo":""}
+        
+        // qzone_type  0正常（自己看自己） 1、2正常（自己看别人）  5空间有设权限无法访问  6空间有权限（回答问题后访问）  8未开通空间  9空间封禁(您访问的空间被多名用户举报，暂时无法查看。)
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
             return [
-                'status' => 2,
+                'status' => -1,
                 'msg'    => '查询空间资料失败：访问超时',
             ];
         }
-        if (isset($arr['code']) && $arr['code'] === 0) {
+        if ($arr['code'] === 0) { // 返回正常
+            $qzone_data = $arr['data']; // 取数据
+            // 空间访问数量为0，则代表空间无法访问（即便能访问，也将访问量为0的定义为无法访问）
+            if ($qzone_data['visitor_total'] === 0) {
+                return [
+                    'status' => -4009,
+                    'code'   => $qzone_data['qzone_type'],
+                    'msg'    => "空间无权限访问[{$qzone_data['qzone_type']}]",
+                ];
+            }
+            
             return [
                 'status' => 1,
                 'msg'    => '查询空间资料完成',
-                'data'   => $arr['data'],
+                'data'   => $qzone_data,
             ];
         } else {
             return [
-                'status' => 2,
+                'status' => $arr['code'],
                 'msg'    => $arr['message'] ?? '查询空间资料失败：未知错误',
             ];
         }
