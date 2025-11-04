@@ -1548,6 +1548,39 @@ class Dream extends Common
     }
     
     /**
+     * 通过扫描二维码来授权登录（K值登录）
+     *
+     * @param string $k
+     *
+     * @return array
+     */
+    public function kLogin(string $k): array
+    {
+        $param = ['k' => $k];
+        $str   = $this->query('/kLogin', $param);
+        // 返回字符串：真 或者 假
+        
+        // qzone_type  0正常（自己看自己） 1、2正常（自己看别人）  5空间有设权限无法访问  6空间有权限（回答问题后访问）  8未开通空间  9空间封禁(您访问的空间被多名用户举报，暂时无法查看。)
+        if (!$str) {
+            return [
+                'status' => -1,
+                'msg'    => '授权登录失败：访问超时',
+            ];
+        }
+        if ($str === '真') { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => '授权登录成功',
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => '授权登录失败',
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
