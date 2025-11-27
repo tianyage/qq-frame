@@ -149,10 +149,11 @@ class Xlz extends Common
      *
      * @param int|string $qq       要登录的QQ号
      * @param int|string $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
+     * @param string     $guid
      *
      * @return array
      */
-    public function qrLogin(int|string $qq, int|string $protocol = 5): array
+    public function qrLogin(int|string $qq, int|string $protocol = 5, string $guid = ''): array
     {
         // 将字符串协议改为正确的code
         if (is_string($protocol)) {
@@ -170,6 +171,7 @@ class Xlz extends Common
         $param = [
             'qq'       => $qq,
             'protocol' => $protocol,
+            'guid'     => $guid,
         ];
         $json  = $this->query('/qrLogin', $param);
         $arr   = json_decode($json, true);
@@ -532,6 +534,9 @@ class Xlz extends Common
             // 成功
             if ($arr['retcode'] === 0) {
                 $msg = "名片点赞{$num}次成功";
+                if ($del_record) {
+                    $msg .= '，' . ($arr['msg2'] ?? '未知删除结果');
+                }
             } elseif ($arr['retcode'] === 1) {
                 $msg = "TA不是你的好友";
             } elseif ($arr['retcode'] === 404) {

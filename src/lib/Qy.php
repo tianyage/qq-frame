@@ -188,10 +188,11 @@ class Qy extends Common
      *
      * @param int|string $qq       要登录的QQ号
      * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ,19鸿蒙HD,20LiteQQ
+     * @param string     $guid
      *
      * @return array
      */
-    public function qrLogin(int|string $qq, int|string $protocol = 15): array
+    public function qrLogin(int|string $qq, int|string $protocol = 15, string $guid = ''): array
     {
         // 将字符串协议改为正确的code
         if (is_string($protocol)) {
@@ -208,6 +209,7 @@ class Qy extends Common
         $param = [
             'qq'       => $qq,
             'protocol' => $protocol,
+            'guid'     => $guid,
         ];
         $json  = $this->query('/qrLogin', $param);
         if ($json) {
