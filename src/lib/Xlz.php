@@ -543,7 +543,7 @@ class Xlz extends Common
                 // 这条代码暂时无效，因为 发功能包 的api目前不返回这个404 只返回bool
                 $msg = "自动更新已掉线";
             } elseif ($arr['retcode'] === 20003) {
-                // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或  今日点赞数己达上限(给非好友时才会返回这个)
+                // 今日点赞好友数己达上限 或 今日同一好友点赞数已达 SVIP 上限  或 今日同一好友点赞数已达上限  或  今日点赞数己达上限(给非好友时才会返回这个)
                 $msg = $arr['retmsg'];
             } elseif ($arr['retcode'] === 10003) {
                 // 由于对方权限设置，点赞失败
@@ -1694,9 +1694,10 @@ class Xlz extends Common
             // 空间访问数量为0，则代表空间无法访问（即便能访问，也将访问量为0的定义为无法访问）
             if ($qzone_data['visitor_total'] === 0) {
                 return [
-                    'status' => -4009,
+                    'status' => -4008,
                     'code'   => $qzone_data['qzone_type'],
-                    'msg'    => "空间无权限访问[{$qzone_data['qzone_type']}]",
+                    'msg'    => "空间访客查看失败[{$qzone_data['qzone_type']}]",
+                    'ret'    => $json,
                 ];
             }
             

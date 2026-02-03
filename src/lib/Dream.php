@@ -20,6 +20,9 @@ class Dream extends Common
      *
      */
     public array $EVENT_TYPE_CODE = [
+        '群事件_某人退出了群' => 201,
+        '群事件_某人加入了群' => 220,
+        
         '群事件_我被邀请加入群' => 214,
         '群事件_某人申请加群'   => 213,
         '群事件_某人撤回事件'   => 221,
@@ -1528,9 +1531,10 @@ class Dream extends Common
             // 空间访问数量为0，则代表空间无法访问（即便能访问，也将访问量为0的定义为无法访问）
             if ($qzone_data['visitor_total'] === 0) {
                 return [
-                    'status' => -4009,
+                    'status' => -4008,
                     'code'   => $qzone_data['qzone_type'],
-                    'msg'    => "空间无权限访问[{$qzone_data['qzone_type']}]",
+                    'msg'    => "空间访客查看失败[{$qzone_data['qzone_type']}]",
+                    'ret'    => $json,
                 ];
             }
             
