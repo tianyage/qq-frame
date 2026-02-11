@@ -1748,6 +1748,44 @@ class Xlz extends Common
     }
     
     /**
+     * 圈圈点赞
+     * （拉圈圈）
+     *
+     * @param int|string $toqq    对方QQ
+     * @param int        $quan_id 圈圈ID
+     *
+     * @return array
+     */
+    public function quanquanLike(int|string $toqq, int $quan_id): array
+    {
+        $param = [
+            'toqq'    => $toqq,
+            'quan_id' => $quan_id,
+        ];
+        // {"code":0,"msg":"获取成功","data":{"flag":[{"id":2,"num":15,"title":"有为青年"},{"id":7,"num":73,"title":"上班族"},{"id":8,"num":13,"title":"潜力股"},{"id":10,"num":4,"title":"技术宅"},{"id":14,"num":11,"title":"愤青"},{"id":17,"num":25,"title":"K歌"},{"id":20,"num":24,"title":"美食"}]}}
+        $json = $this->query('/quanquanLike', $param);
+        $arr  = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "圈圈点赞{$quan_id}失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "圈圈点赞{$quan_id}完成",
+                'data'   => $arr['data']['flag'] ?? [],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "圈圈点赞{$quan_id}失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
