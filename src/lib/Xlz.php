@@ -67,6 +67,7 @@ class Xlz extends Common
         '消息类型_好友通常消息' => 166,
         '消息类型_群聊消息'     => 134,
         '消息类型_临时会话'     => 141,
+        '消息类型_好友语音消息' => 208,
     ];
     
     /**
@@ -634,74 +635,74 @@ class Xlz extends Common
         ];
         // {"retcode":0,"retmsg":"","time":"1680015780"}  time用于撤回
         $json = $this->query('/sendFriendMsg', $param);
-        if ($json) {
-            $arr = json_decode($json, true);
-            if ($arr) {
-                try {
-                    if ($arr['retcode'] === 0) {
-                        $data = [
-                            'status' => 1,
-                            'msg'    => '发送成功',
-                            'time'   => $arr['time'],
-                        ];
-                    } elseif ($arr['retcode'] === 16) {
-                        $data = [
-                            'status' => 3,
-                            'msg'    => '对方不是你的好友',
-                        ];
-                    } elseif ($arr['retcode'] === -1) {
-                        // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
-                        // {"retcode":-1,"retmsg":"获取消息签名失败","time":"0"}
-                        // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
-                        $data = [
-                            'status' => -2,
-                            'msg'    => $arr['retmsg'] ?? '发送数据包失败，对方QQ不存在',
-                        ];
-                    } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
-                        // {"retcode":1,"retmsg":"","time":"1714973481"}
-                        $data = [
-                            'status' => 4,
-                            'msg'    => '发送完成，但消息疑似被屏蔽',
-                            'time'   => $arr['time'],
-                        ];
-                    } elseif ($arr['retcode'] === 405) {
-                        // [405]该框架QQ未登录
-                        $data = [
-                            'status' => -3,
-                            'msg'    => 'QQ目前离线中',
-                        ];
-                    } elseif ($arr['retcode'] === 404) {
-                        // [404]未在框架找到对应QQ
-                        $data = [
-                            'status' => 404,
-                            'msg'    => 'QQ已不存在',
-                        ];
-                    } else {
-                        $data = [
-                            'status' => 2,
-                            'msg'    => $json,
-                        ];
-                    }
-                } catch (Exception $e) {
+        if (!$json) {
+            return [
+                'status' => -1,
+                'msg'    => '访问超时',
+            ];
+        }
+        
+        $arr = json_decode($json, true);
+        if ($arr) {
+            try {
+                if ($arr['retcode'] === 0) {
+                    $data = [
+                        'status' => 1,
+                        'msg'    => '发送成功',
+                        'time'   => $arr['time'],
+                    ];
+                } elseif ($arr['retcode'] === 16) {
+                    $data = [
+                        'status' => 3,
+                        'msg'    => '对方不是你的好友',
+                    ];
+                } elseif ($arr['retcode'] === -1) {
+                    // {"retcode":-1,"retmsg":"获取返回数据包失败","time":"0"}
+                    // {"retcode":-1,"retmsg":"获取消息签名失败","time":"0"}
+                    // panda框架下，如果toqq不在好友列表中(或者同时是QQ号不存在或被冻结查找不到？) 会返回-1
+                    $data = [
+                        'status' => -2,
+                        'msg'    => $arr['retmsg'] ?? '发送数据包失败，对方QQ不存在',
+                    ];
+                } elseif ($arr['retcode'] === 1 && $arr['retmsg'] === '') {
+                    // {"retcode":1,"retmsg":"","time":"1714973481"}
+                    $data = [
+                        'status' => 4,
+                        'msg'    => '发送完成，但消息疑似被屏蔽',
+                        'time'   => $arr['time'],
+                    ];
+                } elseif ($arr['retcode'] === 405) {
+                    // [405]该框架QQ未登录
+                    $data = [
+                        'status' => 405,
+                        'msg'    => 'QQ目前离线中',
+                    ];
+                } elseif ($arr['retcode'] === 404) {
+                    // [404]未在框架找到对应QQ
+                    $data = [
+                        'status' => 404,
+                        'msg'    => 'QQ已不存在',
+                    ];
+                } else {
                     $data = [
                         'status' => 2,
-                        'msg'    => '消息发送失败',
+                        'msg'    => $json,
                     ];
-                    if (function_exists('trace')) {
-                        /** @noinspection PhpUndefinedFunctionInspection */
-                        trace($json . PHP_EOL, 'sendFriendMsg_xlz');
-                    }
                 }
-            } else {
+            } catch (Exception $e) {
                 $data = [
                     'status' => 2,
-                    'msg'    => '返回结果格式错误',
+                    'msg'    => '消息发送失败',
                 ];
+                if (function_exists('trace')) {
+                    /** @noinspection PhpUndefinedFunctionInspection */
+                    trace($json . PHP_EOL, 'sendFriendMsg_xlz');
+                }
             }
         } else {
             $data = [
-                'status' => -1,
-                'msg'    => '访问超时',
+                'status' => 2,
+                'msg'    => '返回结果格式错误',
             ];
         }
         
@@ -744,7 +745,14 @@ class Xlz extends Common
         // {"retcode":110,"retmsg":"发送失败，你已被移出该群，请重新加群。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
         // {"retcode":120,"retmsg":"你已被禁言，消息无法发送。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
         $json = $this->query('/sendGroupMsg', $param);
-        $arr  = json_decode($json, true);
+        if (!$json) {
+            return [
+                'status' => -1,
+                'msg'    => '访问超时',
+            ];
+        }
+        
+        $arr = json_decode($json, true);
         if ($arr) {
             if ($arr['retcode'] === 0) {
                 $data = [
@@ -754,24 +762,24 @@ class Xlz extends Common
                 ];
             } elseif ($arr['retcode'] === 110) {
                 $data = [
-                    'status' => 2,
+                    'status' => 110,
                     'msg'    => '发送失败，你已不在此群',
                 ];
             } elseif ($arr['retcode'] === 120) {
                 $data = [
-                    'status' => 2,
+                    'status' => 120,
                     'msg'    => '发送失败，群内你已被禁言',
                 ];
             } elseif ($arr['retcode'] === 405) {
                 // 该框架QQ未登录
                 $data = [
-                    'status' => 2,
+                    'status' => 405,
                     'msg'    => '发送失败，服务器初始化中',
                 ];
             } elseif ($arr['retcode'] === 404) {
                 // {"retcode":404,"retmsg":"未在框架找到对应QQ","time":"1744475326"}
                 $data = [
-                    'status' => 2,
+                    'status' => 404,
                     'msg'    => '发送失败，已不在线',
                 ];
             } else {
