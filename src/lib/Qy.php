@@ -1778,6 +1778,108 @@ class Qy extends Common
     }
     
     /**
+     * 移动好友分组
+     *
+     * @param int|string $toqq     对方QQ
+     * @param int        $group_id 分组ID
+     *
+     * @return array
+     */
+    public function moveFriendGroup(int|string $toqq, int $group_id): array
+    {
+        $param = [
+            'toqq'     => $toqq,
+            'group_id' => $group_id,
+        ];
+        // {"code":0,"msg":"移动分组成功"}
+        $json = $this->query('/moveFriendGroup', $param);
+        $arr  = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "移动好友分组{$group_id}失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "移动好友分组{$group_id}完成",
+                'data'   => [],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "移动好友分组{$group_id}失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 体验小游戏15s 等级加速
+     *
+     * @return array
+     */
+    public function game15s(): array
+    {
+        $param = [
+        ];
+        // {"code":0,"message":"体验小游戏15s完成","data":null,"echo":""}
+        $json = $this->query('/game15s', $param);
+        $arr  = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "体验小游戏15s失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "体验小游戏15s完成",
+                'data'   => [],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "体验小游戏15s失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 获取农场code 等级加速
+     *
+     * @return array
+     */
+    public function getFarmCode(): array
+    {
+        $param = [
+        ];
+        // {"code":0,"message":"农场code获取成功","data":{"farm_code":"f4131572d735438e9aa276ad1960372a"},"echo":""}
+        // {"code":20001,"message":"农场code获取失败","data":"08B9A90210211","echo":""}
+        $json = $this->query('/getFarmCode', $param);
+        $arr  = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "获取农场code失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "获取农场code完成",
+                'data'   => $arr['data']['farm_code'] ?? '',
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "获取农场code失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
