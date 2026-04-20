@@ -675,13 +675,19 @@ class Xlz extends Common
                     // [405]该框架QQ未登录
                     $data = [
                         'status' => 405,
-                        'msg'    => 'QQ目前离线中',
+                        'msg'    => '发送失败，服务器初始化中',
                     ];
                 } elseif ($arr['retcode'] === 404) {
                     // [404]未在框架找到对应QQ
                     $data = [
                         'status' => 404,
                         'msg'    => 'QQ已不存在',
+                    ];
+                } elseif ($arr['retcode'] === 120 && $arr['retmsg'] === '') { // 手表协议好像才会返回这个（不确定）
+                    // {"retcode":120,"retmsg":"","time":"1776651759"}
+                    $data = [
+                        'status' => 120,
+                        'msg'    => '发送完成，但消息已被屏蔽(对方拒收你的消息或禁言)',
                     ];
                 } else {
                     $data = [
@@ -781,6 +787,12 @@ class Xlz extends Common
                 $data = [
                     'status' => 404,
                     'msg'    => '发送失败，已不在线',
+                ];
+            } elseif ($arr['retcode'] === -600) {
+                // [-600]发送失败，该条消息被腾讯屏蔽
+                $data = [
+                    'status' => -600,
+                    'msg'    => '发送失败，该条消息被腾讯屏蔽',
                 ];
             } else {
                 $data = [
