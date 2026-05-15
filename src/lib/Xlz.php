@@ -681,7 +681,7 @@ class Xlz extends Common
                     // [404]未在框架找到对应QQ
                     $data = [
                         'status' => 404,
-                        'msg'    => 'QQ已不存在',
+                        'msg'    => '发送失败，已不在线',
                     ];
                 } elseif ($arr['retcode'] === 120 && $arr['retmsg'] === '') { // 手表协议好像才会返回这个（不确定）
                     // {"retcode":120,"retmsg":"","time":"1776651759"}
@@ -792,7 +792,7 @@ class Xlz extends Common
                 // [-600]发送失败，该条消息被腾讯屏蔽
                 $data = [
                     'status' => -600,
-                    'msg'    => '发送失败，该条消息被腾讯屏蔽',
+                    'msg'    => '发送失败，消息被屏蔽',
                 ];
             } else {
                 $data = [
@@ -802,8 +802,8 @@ class Xlz extends Common
             }
         } else {
             $data = [
-                'status' => 2,
-                'msg'    => '发送失败，接口返回错误',
+                'status' => -2,
+                'msg'    => "发送失败：{$json}",
             ];
         }
         

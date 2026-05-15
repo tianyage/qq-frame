@@ -8,6 +8,7 @@
 /** @noinspection PhpUnused */
 
 // napcat框架 https://doc.napneko.icu/develop/api
+// napcat.apifox.cn
 
 declare(strict_types=1);
 
@@ -363,21 +364,23 @@ class NapCat extends Common
         //    "status": "ok",
         //    "retcode": 0,
         //    "data": {
-        //        "cookies": "pt2gguin=o0908777454; uin=o0908777454; skey=@dqUJAmlCf; pt_recent_uins=3dabef7ec4b6ff8fc481a1303799d92a88af5218f691281e0fb9ae13e35142aea1ef799992ec98c35dd647a0bc45f91a456e20df0b5d6b49; RK=YDtJPi/vc9; ptnick_908777454=e694b6e6acbee4b893e794a8e688b7; ptcz=d14c43b9f58a3e4f61a3397cc75f55851ae5c2303a35d74935afde24071758f2; p_uin=o0908777454; pt4_token=-9L1xJZxNd0U2x9kOSVmsy*kNiK4DbSo4kvg9Tqw8pM_; p_skey=lL8lJPEMAO4Z87sV0z3VcEJJ5YYZWaWW*T5Z8Z8q4DY_",
-        //        "bkn": "1116143708"
+        //        "cookies": "pt2gguin=o0908777454; uin=o0908777454; skey=@Sm8tffuLJ; pt_recent_uins=736cd4cf1567159167d6b69a866dc1a451b329b45ff4fc65bc0d9242d3b5b9c038642868c964cf4d1c9c74d3756e6433adaba401a9d76c94; RK=ILpDbi/kb9; ptnick_908777454=424c41434b5f53544152; ptcz=6ce42c77f4e20da7fe772900cff4f0a8aef865b1b9b514e2372287767911f969; p_uin=o0908777454; pt4_token=2rRH9zbL9OxDO0s9ZXdtq4FE1hqXXnH2fdEEDSaLId0_; p_skey=ZYXRnt35NN7hcyb34yITsmZzl7MftMxZ4Lvovu4KAbs_",
+        //        "bkn": "24498088"
         //    },
         //    "message": "",
         //    "wording": "",
-        //    "echo": null
+        //    "echo": "i43x4zm8k8",
+        //    "stream": "normal-action"
         //}
-        $json = $this->query('/api/getCookie', $param);
+        
+        $json = $this->query('/get_cookies', $param);
         if ($json) {
             $arr = json_decode($json, true);
             if ($arr && $arr['retcode'] === 0 && $arr['status'] === 'ok') {
-                $cookie = $arr['data']['cookies'];
-                preg_match('/skey=(.{10})/', $cookie, $skey);
-                preg_match("/p_skey=(.{44})/", $cookie, $p_skey);
-                preg_match("/pt4_token=(.{44})/", $cookie, $pt4_token);
+                $cookie = $arr['data']['cookies'] . ';';
+                preg_match('/skey=(.{10});/', $cookie, $skey);
+                preg_match("/p_skey=(.*?);/", $cookie, $p_skey);
+                preg_match("/pt4_token=(.*?);/", $cookie, $pt4_token);
                 
                 if (isset($skey[1]) && isset($p_skey[1])) {
                     $data = [
@@ -426,32 +429,16 @@ class NapCat extends Common
     }
     
     /**
-     * napcat框架直接调用cardlike2就好了
+     * 名片赞
      *
      * @param string|int $toqq 对方QQ
      * @param int        $num  点赞次数 默认1
+     * @param int        $type
      *
      * @return string
      */
-    public function cardLike(string|int $toqq, int $num = 1): string
+    public function cardLike(string|int $toqq, int $num = 1, int $type = 1): string
     {
-        return $this->cardLike2($toqq, $num);
-    }
-    
-    /**
-     * 名片赞2
-     * （发功能包版，一次性点赞，可以减少接口访问次数了）
-     *
-     * @param string|int $toqq 对方QQ
-     * @param int        $num  点赞次数 默认1
-     * @param int        $type 点赞类型 1好友 27随心贴陌生人（好像无效）  31搜索QQ（好像无效）  5群友  12我赞过谁  41附近的人 66点赞列表
-     *
-     * @return string
-     */
-    public function cardLike2(string|int $toqq, int $num = 1, int $type = 1): string
-    {
-        // {"server_info":{"key":"123","port":"4001","serverUrl":"http://192.168.11.1"},"type":"Event","data":{"框架QQ":"908777454","操作QQ":"0","触发QQ":"454701103","来源群号":"0","来源群名":"","消息内容":"赞了我的资料卡1次","消息类型":"108","操作QQ昵称":"","触发QQ昵称":"simon\\u2776","消息子类型":"10021","消息Seq":"0","消息时间戳":"1679587653"}}
-        
         $num = max($num, 1); // 最少1赞
         $num = min($num, 20); // 最多20赞
         
@@ -467,7 +454,7 @@ class NapCat extends Common
         // 单次最高20，但是可以多次20来叠加到50上限
         // {"status":"failed","retcode":200,"data":null,"message":"点赞失败 点赞数无效","wording":"点赞失败 点赞数无效","echo":null}
         
-        // {"status":"ok","retcode":0,"data":null,"message":"","wording":"","echo":null}
+        // {"status":"ok","retcode":0,"message":"","wording":"","echo":"","stream":"normal-action"}
         
         if ($json) {
             $arr = json_decode($json, true);
@@ -558,7 +545,7 @@ class NapCat extends Common
         $json = $this->query('/send_private_msg', $param);
         if ($json) {
             $arr = json_decode($json, true);
-            if ($arr) {
+            if ($arr && isset($arr['retcode'])) {
                 if ($arr['status'] === 'ok') {
                     $data = [
                         'status'     => 1,
@@ -619,17 +606,15 @@ class NapCat extends Common
             'group_id' => $group_id,
             'message'  => $content,
         ];
-        // {"retcode":0,"retmsg":"","time":"1680015202","msg_req":9800,"msg_random":1680024476}
-        // {"retcode":110,"retmsg":"发送失败，你已被移出该群，请重新加群。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
-        // {"retcode":120,"retmsg":"你已被禁言，消息无法发送。","time":"1696957492","msg_req":24149,"msg_random":1696981710}
+        // {"status":"ok","retcode":0,"data":{"message_id":696124706},"message":"","wording":""}
         $json = $this->query('/send_group_msg', $param);
         $arr  = json_decode($json, true);
-        if ($arr) {
+        if ($arr && isset($arr['retcode'])) {
             if ($arr['retcode'] === 0) {
                 $data = [
                     'status' => 1,
                     'msg'    => '发送成功',
-                    'time'   => $arr['time'],
+                    'time'   => time(),
                 ];
             } elseif ($arr['retcode'] === 110) {
                 $data = [
@@ -679,7 +664,7 @@ class NapCat extends Common
     {
         $param = [
         ];
-        $json  = $this->query('/api/getClientKey', $param);
+        $json  = $this->query('/get_clientkey', $param);
         if ($json) {
             $arr = json_decode($json, true);
             if ($arr['retcode'] === 0) {
@@ -1171,6 +1156,26 @@ class NapCat extends Common
             'status' => 2,
             'msg'    => '当前协议不支持此API',
         ];
+    }
+    
+    /**
+     * 设置群聊专属头衔
+     *
+     * @param int    $group 群号
+     * @param int    $toqq
+     * @param string $title 头衔,支持emoji
+     *
+     * @return string
+     */
+    public function groupExclusiveTitle(int $group, int $toqq, string $title): string
+    {
+        $param = [
+            'group_id'      => $group,
+            'user_id'       => $toqq,
+            'special_title' => $title,
+        ];
+        // {"status":"ok","retcode":0,"message":"","wording":"","echo":"785c71wdrac","stream":"normal-action"}
+        return $this->query('/set_group_special_title', $param);
     }
     
     /**
