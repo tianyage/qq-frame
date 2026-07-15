@@ -2101,7 +2101,7 @@ class Dulu extends Common
      *
      * @return array
      */
-    public function getDevLoginInfo(bool $need_hex): array
+    public function getDevLoginInfo(bool $need_hex = false): array
     {
         $param = [
             'need_hex' => $need_hex,
@@ -2135,7 +2135,7 @@ class Dulu extends Common
      *
      * @return array
      */
-    public function getGroupNotify(bool $need_hex): array
+    public function getGroupNotify(bool $need_hex = false): array
     {
         $param = [
             'need_hex' => $need_hex,
@@ -2168,7 +2168,7 @@ class Dulu extends Common
      *
      * @return array
      */
-    public function getIntimacySpackList(bool $need_hex): array
+    public function getIntimacySpackList(bool $need_hex = false): array
     {
         $param = [
             'need_hex' => $need_hex,
@@ -2204,13 +2204,13 @@ class Dulu extends Common
      *
      * @return array
      */
-    public function intimacySpackSign(string $intimate_id, bool $need_hex): array
+    public function intimacySpackCheckIn(string $intimate_id, bool $need_hex = false): array
     {
         $param = [
             'intimate_id' => $intimate_id,
             'need_hex'    => $need_hex,
         ];
-        $json  = $this->query('/intimacySpackSign', $param);
+        $json  = $this->query('/intimacySpackCheckIn', $param);
         // {"code":0,"message":"连续打卡 1天","data":{"uin":"481777355"}}
         // {"code":10004,"message":"已签到","data":{"uin":""}}
         $arr = json_decode($json, true);
