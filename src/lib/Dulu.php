@@ -2234,6 +2234,41 @@ class Dulu extends Common
     }
     
     /**
+     * 获取小程序的code值
+     *
+     * @param string $appid 亲密空间ID
+     *
+     * @return array
+     */
+    public function getMiniProgramCode(string $appid): array
+    {
+        $param = [
+            'appid' => $appid,
+        ];
+        $json  = $this->query('/getMiniProgramCode', $param);
+        // {"code":0,"message":"code获取成功","data":"279ed6df65171c49b20fb8ecdcbdb18d","echo":""}
+        // {"code":50001,"message":"code获取失败，发包超时","data":null,"echo":""}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "获取code值失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0 || $arr['code'] === 10004) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "获取code值失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path

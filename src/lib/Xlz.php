@@ -2063,6 +2063,181 @@ class Xlz extends Common
     }
     
     /**
+     * 获取设备登录信息
+     * 历史GUID
+     *
+     * @param bool $need_hex
+     *
+     * @return array
+     */
+    public function getDevLoginInfo(bool $need_hex = false): array
+    {
+        $param = [
+            'need_hex' => $need_hex,
+        ];
+        $json  = $this->query('/getDevLoginInfo', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "获取设备登录信息失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "获取设备登录信息完成",
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "获取设备登录信息失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 获取群通知列表
+     * (历史群通知，包含已被处理过的通知)
+     *
+     * @param bool $need_hex
+     *
+     * @return array
+     */
+    public function getGroupNotify(bool $need_hex = false): array
+    {
+        $param = [
+            'need_hex' => $need_hex,
+        ];
+        $json  = $this->query('/getGroupNotify', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "获取群通知列表失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "获取群通知列表完成",
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "获取群通知列表失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 获取亲密空间列表
+     *
+     * @param bool $need_hex
+     *
+     * @return array
+     */
+    public function getIntimacySpackList(bool $need_hex = false): array
+    {
+        $param = [
+            'need_hex' => $need_hex,
+        ];
+        $json  = $this->query('/getIntimacySpackList', $param);
+        // {"code":0,"message":"获取成功","data":[{"status":4,"id":"I_9FyzEGRbRXadPHvKWVWazH","qq":481777355,"uid":"u_-QGRl_4nJGMFErw-wUqwUA","nick":"??机器人???","content":"你今日还没有打卡","type_pic":"https:\/\/downv6.qq.com\/qqweb\/res\/mutualmark\/partner_dining\/1_0_0_big.png?v=1","type_name":"亲密"},{"status":1,"id":"F_LhR63CqrYdF31UcCR1y8JU","qq":454701103,"uid":"u_PkfxOD64YIpdrsfVkT7oDg","nick":"simon ?????","content":"对方还没打卡，提醒下吧","type_pic":"https:\/\/downv6.qq.com\/qqweb\/res\/mutualmark\/buddy\/0_0_0_big.png?v=2023032801","type_name":"基友"}]}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "获取亲密空间列表失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "获取亲密空间列表完成",
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "获取亲密空间列表失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 亲密空间打卡
+     *
+     * @param string $intimate_id 亲密空间ID
+     * @param bool   $need_hex
+     *
+     * @return array
+     */
+    public function intimacySpackCheckIn(string $intimate_id, bool $need_hex = false): array
+    {
+        $param = [
+            'intimate_id' => $intimate_id,
+            'need_hex'    => $need_hex,
+        ];
+        $json  = $this->query('/intimacySpackCheckIn', $param);
+        // {"code":0,"message":"连续打卡 1天","data":{"uin":"481777355"}}
+        // {"code":10004,"message":"已签到","data":{"uin":""}}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "亲密空间打卡失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0 || $arr['code'] === 10004) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "亲密空间打卡失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 获取小程序的code值
+     *
+     * @param string $appid 亲密空间ID
+     *
+     * @return array
+     */
+    public function getMiniProgramCode(string $appid): array
+    {
+        $param = [
+            'appid' => $appid,
+        ];
+        $json  = $this->query('/getMiniProgramCode', $param);
+        // {"code":0,"message":"code获取成功","data":"279ed6df65171c49b20fb8ecdcbdb18d","echo":""}
+        // {"code":50001,"message":"code获取失败，发包超时","data":null,"echo":""}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "获取code值失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0 || $arr['code'] === 10004) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "获取code值失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
      * 提交数据
      *
      * @param string $path
