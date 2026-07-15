@@ -189,10 +189,12 @@ class Qy extends Common
      * @param int|string $qq       要登录的QQ号
      * @param int|string $protocol 协议：0=安卓,1=企点,2=HD,3=企业,4=TIM,5=iPad,6=苹果,7=Mac,8=Linux,9~16=手表1-8,17谷歌QQ,18鸿蒙QQ,19鸿蒙HD,20LiteQQ
      * @param string     $guid
+     * @param string     $brand
+     * @param string     $model
      *
      * @return array
      */
-    public function qrLogin(int|string $qq, int|string $protocol = 15, string $guid = ''): array
+    public function qrLogin(int|string $qq, int|string $protocol = 15, string $guid = '', string $brand = 'Xiaomi', string $model = 'M2517W1'): array
     {
         // 将字符串协议改为正确的code
         if (is_string($protocol)) {
@@ -210,6 +212,8 @@ class Qy extends Common
             'qq'       => $qq,
             'protocol' => $protocol,
             'guid'     => $guid,
+            'brand'    => $brand,
+            'model'    => $model,
         ];
         $json  = $this->query('/qrLogin', $param);
         if ($json) {
@@ -395,7 +399,7 @@ class Qy extends Common
             } else {
                 if (function_exists('trace')) {
                     /** @noinspection PhpUndefinedFunctionInspection */
-                    trace($json, 'getClientKey_qy');
+                    trace($json, 'getClientKey_qy' . $this->robot_qq);
                 }
                 return [
                     'status' => 2,
@@ -422,9 +426,10 @@ class Qy extends Common
     {
         $ret   = $this->getLoginParams($type);
         $param = [
-            'url'   => urldecode($ret['u1']),
-            'appid' => $ret['aid'],
-            'daid'  => $ret['daid'],
+            'url'    => urldecode($ret['u1']),
+            'appid'  => $ret['aid'],
+            'daid'   => $ret['daid'],
+            'domain' => $ret['domain'],
         ];
         
         $json = $this->query('/getCookie', $param);
@@ -810,12 +815,23 @@ class Qy extends Common
     /**
      * 获取框架所有QQ
      *
-     * @return string
+     * @return array
+     * @throws Exception
      */
-    public function getAll(): string
+    public function getAll(): array
     {
         // {"QQlist":{"454701103":{"昵称":"simon\\u2776","登录状态":"未登录","等级信息":"SVIP10|169|29550|7.7| 30","收发信息":"10分55秒 收:2,发:0,速:0条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"183.47.117.157:443[所在地代码:sz]"},"2686426513":{"昵称":"\\u0E51花生小狗\\u0E51","登录状态":"登录完毕","等级信息":"NoVIP| 29| 961|0.0| 59","收发信息":"11分26秒 收:3,发:15,速:1条/min","登录IP":"10.52.100.181[本地登录]","登录协议":"手表QQ","腾讯服务器":"222.94.109.183:443[所在地代码:sh]"}}}
-        return $this->query('/getAll', ['qq' => 10000]);
+        $json = $this->query('/getAll', ['qq' => 10000]);
+        if (!$json) {
+            throw new Exception('接口访问超时', 500);
+        }
+        $arr = json_decode($json, true);
+        // 如果jsondecode错误  就进行一次移除特殊符号的操作
+        if (json_last_error()) {
+            $json = $this->strip_control_characters($json);
+            $arr  = json_decode($json, true);
+        }
+        return $arr['QQlist'];
     }
     
     /**
@@ -972,14 +988,33 @@ class Qy extends Common
      *
      * @param int|string $qq
      *
-     * @return string
+     * @return array
      */
-    public function logout(int|string $qq): string
+    public function logout(int|string $qq): array
     {
         $param = [
             'qq' => $qq,
         ];
-        return $this->query('/logout', $param);
+        $json  = $this->query('/logout', $param);
+        $arr   = json_decode($json, true);
+        if (!$arr || !isset($arr['retcode'])) {
+            return [
+                'status' => -1,
+                'msg'    => "下线失败：访问超时",
+            ];
+        }
+        if ($arr['retcode'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "下线完成",
+                'data'   => '',
+            ];
+        } else {
+            return [
+                'status' => 2,
+                'msg'    => $arr['retmsg'],
+            ];
+        }
     }
     
     /**
@@ -1875,6 +1910,82 @@ class Qy extends Common
             return [
                 'status' => $arr['code'],
                 'msg'    => $arr['message'] ?? "获取农场code失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 获取个性标签列表
+     *
+     * @param int|string $toqq
+     *
+     * @return array
+     */
+    public function getLabels(int|string $toqq): array
+    {
+        $param = [
+            'toqq' => $toqq,
+        ];
+        $json  = $this->query('/getLabels', $param);
+        // {"code":0,"msg":"获取成功，但标签数量为0","data":[]}
+        // {"code":0,"msg":"获取成功","data":[{"id":10010660,"name":"点","time":1633252416,"like_num":71},{"id":11472442,"name":"com","time":1633252416,"like_num":64},{"id":185455684,"name":"ttdaigua","time":1633252416,"like_num":62}]}
+        
+        // {"code":50001,"message":"获取个性标签列表失败，发包超时","data":null,"echo":""}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "获取{$toqq}的个性标签失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "获取{$toqq}的个性标签完成",
+                'data'   => $arr['data'] ?? [],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "获取{$toqq}的个性标签失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 个性标签点赞
+     * (非好友不能点赞，自己也能给自己点)
+     *
+     * @param int|string $toqq
+     * @param int        $label_id
+     *
+     * @return array
+     */
+    public function labelLike(int|string $toqq, int $label_id): array
+    {
+        $param = [
+            'toqq'     => $toqq,
+            'label_id' => $label_id,
+        ];
+        $json  = $this->query('/labelLike', $param);
+        // {"code":0,"message":"点赞成功","data":null,"echo":""}
+        // {"code":50001,"message":"点赞失败，发包超时","data":null,"echo":""}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "标签点赞{$toqq}[{$label_id}]失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "标签点赞{$toqq}[{$label_id}]完成",
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "标签点赞{$toqq}[{$label_id}]失败：未知错误",
             ];
         }
     }

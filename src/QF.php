@@ -33,10 +33,10 @@ class QF extends Common
             $this->sdk = new EBotNT();
         } elseif (str_starts_with($port, 3)) {
             $this->sdk = new Dream();
-        } elseif (str_starts_with($port, 2)) {
+        } elseif (str_starts_with($port, 7)) {
             $this->sdk = new Dulu();
         } else {
-            // port: 6、7
+            // port: 6
             $this->sdk = new Xlz();
         }
         

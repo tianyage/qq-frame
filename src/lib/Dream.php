@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Tianyage\QqFrame\lib;
 
+use Exception;
+
 class Dream extends Common
 {
     
@@ -128,10 +130,13 @@ class Dream extends Common
      *
      * @param int|string $qq       要登录的QQ号
      * @param int|string $protocol 协议：0 安卓QQ,1 企点QQ,2 QQaPad,3 企业QQ,4 手机Tim,5 手表QQ,6 QQiPad,7 macQQ,8 LinuxQQ 普通QQ无法登录企业/企点
+     * @param string     $guid
+     * @param string     $brand
+     * @param string     $model
      *
      * @return array
      */
-    public function qrLogin(int|string $qq, int|string $protocol = 5): array
+    public function qrLogin(int|string $qq, int|string $protocol = 5, string $guid = '', string $brand = 'Xiaomi', string $model = 'M2517W1'): array
     {
         // 将字符串协议改为正确的code
         if (is_string($protocol)) {
@@ -149,6 +154,9 @@ class Dream extends Common
         $param = [
             'qq'       => $qq,
             'protocol' => $protocol,
+            'guid'     => $guid,
+            'brand'    => $brand,
+            'model'    => $model,
         ];
         $json  = $this->query('/qrLogin', $param);
         $arr   = json_decode($json, true);
@@ -627,9 +635,10 @@ class Dream extends Common
     /**
      * 获取框架所有QQ
      *
-     * @return string
+     * @return array
+     * @throws Exception
      */
-    public function getAll(): string
+    public function getAll(): array
     {
         // query 只返回在线QQ号 每行一个
         // 3465403731
@@ -646,7 +655,9 @@ class Dream extends Common
         //377211367
         
         $str = $this->query('/getAll', ['qq' => 10000]);
-        
+        if (!$str) {
+            throw new Exception('接口访问超时', 500);
+        }
         $arr = explode("\r\n", $str);
         
         $qqlist = [];
@@ -654,21 +665,18 @@ class Dream extends Common
             foreach ($arr as $qq) {
                 if ($qq) {
                     $qqlist[$qq] = [
-                        '昵称'       => '',
-                        '登录状态'   => '登录完毕',
-                        '等级信息'   => '',
-                        '收发信息'   => '',
-                        '登录IP'     => '',
-                        '登录协议'   => 'Dream',
-                        '腾讯服务器' => '',
+                        '昵称'         => '',
+                        '登录状态'     => '登录完毕',
+                        '收发信息'     => '',
+                        '登录协议'     => 'Dream',
+                        '登录信息'     => '',
+                        '最后错误信息' => '',
                     ];
                 }
             }
         }
         
-        $data = ['QQlist' => $qqlist];
-        
-        return json_encode($data, JSON_UNESCAPED_UNICODE);
+        return $qqlist;
     }
     
     /**
@@ -830,14 +838,25 @@ class Dream extends Common
      *
      * @param int|string $qq
      *
-     * @return string
+     * @return array
      */
-    public function logout(int|string $qq): string
+    public function logout(int|string $qq): array
     {
         $param = [
             'qq' => $qq,
         ];
-        return $this->query('/logout', $param);
+        $str   = $this->query('/logout', $param);
+        if (!$str) {
+            return [
+                'status' => -1,
+                'msg'    => "下线失败：访问超时",
+            ];
+        }
+        return [
+            'status' => 1,
+            'msg'    => "下线完成",
+            'data'   => '',
+        ];
     }
     
     
@@ -1720,6 +1739,82 @@ class Dream extends Common
             return [
                 'status' => $arr['code'],
                 'msg'    => $arr['message'] ?? "获取农场code失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 获取个性标签列表
+     *
+     * @param int|string $toqq
+     *
+     * @return array
+     */
+    public function getLabels(int|string $toqq): array
+    {
+        $param = [
+            'toqq' => $toqq,
+        ];
+        $json  = $this->query('/getLabels', $param);
+        // {"code":0,"msg":"获取成功，但标签数量为0","data":[]}
+        // {"code":0,"msg":"获取成功","data":[{"id":10010660,"name":"点","time":1633252416,"like_num":71},{"id":11472442,"name":"com","time":1633252416,"like_num":64},{"id":185455684,"name":"ttdaigua","time":1633252416,"like_num":62}]}
+        
+        // {"code":50001,"message":"获取个性标签列表失败，发包超时","data":null,"echo":""}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "获取{$toqq}的个性标签失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "获取{$toqq}的个性标签完成",
+                'data'   => $arr['data'] ?? [],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "获取{$toqq}的个性标签失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 个性标签点赞
+     * (非好友不能点赞，自己也能给自己点)
+     *
+     * @param int|string $toqq
+     * @param int        $label_id
+     *
+     * @return array
+     */
+    public function labelLike(int|string $toqq, int $label_id): array
+    {
+        $param = [
+            'toqq'     => $toqq,
+            'label_id' => $label_id,
+        ];
+        $json  = $this->query('/labelLike', $param);
+        // {"code":0,"message":"点赞成功","data":null,"echo":""}
+        // {"code":50001,"message":"点赞失败，发包超时","data":null,"echo":""}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "标签点赞{$toqq}[{$label_id}]失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "标签点赞{$toqq}[{$label_id}]完成",
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "标签点赞{$toqq}[{$label_id}]失败：未知错误",
             ];
         }
     }

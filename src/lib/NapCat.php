@@ -434,17 +434,19 @@ class NapCat extends Common
      * @param string|int $toqq 对方QQ
      * @param int        $num  点赞次数 默认1
      * @param int        $type
+     * @param bool       $del_record
      *
      * @return string
      */
-    public function cardLike(string|int $toqq, int $num = 1, int $type = 1): string
+    public function cardLike(string|int $toqq, int $num = 1, int $type = 1, bool $del_record = false): string
     {
         $num = max($num, 1); // 最少1赞
         $num = min($num, 20); // 最多20赞
         
         $json = $this->query('/send_like', [
-            'user_id' => $toqq,
-            'times'   => $num,
+            'user_id'    => $toqq,
+            'times'      => $num,
+            'del_record' => $del_record,
         ]);
         
         // {"status":"failed","retcode":200,"data":null,"message":"点赞失败 今日同一好友点赞数已达上限","wording":"点赞失败 今日同一好友点赞数已达上限","echo":null}
