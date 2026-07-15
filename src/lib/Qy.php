@@ -2185,10 +2185,11 @@ class Qy extends Common
                 'msg'    => "获取code值失败：访问超时",
             ];
         }
-        if ($arr['code'] === 0 || $arr['code'] === 10004) { // 返回正常
+        if ($arr['code'] === 0) { // 返回正常
             return [
                 'status' => 1,
                 'msg'    => $arr['message'],
+                'data'   => $arr['data'],
             ];
         } else {
             return [
