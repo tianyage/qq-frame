@@ -198,29 +198,14 @@ class Dulu extends Common
         $json  = $this->query('/qrLogin', $param);
         $arr   = json_decode($json, true);
         if ($arr) {
-            $retcode = $arr['retcode'];
-            $retmsg  = $arr['retmsg'];
+            $retcode = $arr['code'];
+            $retmsg  = $arr['message'];
             if ($retcode === 0) {
                 $data = [
                     'status' => 1,
-                    'qr'     => $arr['qr'],
+                    'qr'     => $arr['data']['qr_data'],
+                    'qr_id'  => $arr['data']['qr_id'],
                     'msg'    => '二维码获取成功',
-                ];
-            } elseif ($retcode === -103) {
-                // 已在执行登录任务
-                // 但是小栗子长时间没有主动query会二维码失效，但是如果时间太长的话就会检测不出来（依旧显示等待扫码），所以直接删除
-                $this->del();
-                $data = [
-                    'status' => 2,
-                    'msg'    => '二维码已失效',
-                ];
-            } elseif ($retcode === -104) {
-                // QQ[xxxx]当前状态无法再进行登录操作
-                // 例如失效 冻结之类的好像，需要先删除再拉取二维码
-                $this->del();
-                $data = [
-                    'status' => 2,
-                    'msg'    => '数据已重置，请重试',
                 ];
             } else {
                 $data = [
@@ -296,73 +281,38 @@ class Dulu extends Common
         $json = $this->query('/qrQuery', ['qr_id' => $qr_id]);
         if ($json) {
             $arr     = json_decode($json, true);
-            $retcode = $arr['retcode'];
-            $retmsg  = $arr['retmsg'] ?: '无';
+            $retcode = $arr['code'];
+            $retmsg  = $arr['message'] ?: '无';
             if ($retcode === 0) {
-                // {"retcode":0,"retmsg":"登录成功","time":"1679663947"}
                 $data = [
                     'status' => 1,
                     'msg'    => "{$this->robot_qq}登录成功",
                 ];
-            } elseif ($retcode === 505) {
-                // {"retcode":505,"retmsg":"等待用户扫码...","time":"1679663879"}
+            } elseif ($retcode === 48) {
                 $data = [
                     'status' => 3,
                     'msg'    => "等待扫码中",
                 ];
-            } elseif ($retcode === 504) {
-                // {"retcode":504,"retmsg":"扫码成功，请在手机上确认登录","time":"1679663929"}
+            } elseif ($retcode === 53) {
                 $data = [
                     'status' => 3,
                     'msg'    => "扫码成功，请在手机上确认登录",
                 ];
-            } elseif ($retcode === 502) {
-                // 实测 pandaLocal 用户在QQ中点击拒绝按钮或右上角X关闭，会返回502，但retmsg是空的
-                if ($retmsg === '无') {
-                    $data = [
-                        'status' => 2,
-                        'msg'    => "您已拒绝了本次登录请求",
-                    ];
-                } else {
-                    // 设备网络不稳的或处于复杂网络环境
-                    $data = [
-                        'status' => 2,
-                        'msg'    => "网络异常，请尝试使用TimAPP来授权",
-                    ];
-                }
-            } elseif ($retcode === -109) {
+            } elseif ($retcode === 54) {
                 $data = [
                     'status' => 2,
-                    'msg'    => "已主动取消了二维码登录",
+                    'msg'    => "您已拒绝了本次登录请求",
                 ];
-            } elseif ($retcode === -108) {
-                $data = [
-                    'status' => 4,
-                    'msg'    => "实际扫码QQ与本次申请的QQ{$this->robot_qq}不一致，登录失败[{$retcode}]",
-                ];
-            } elseif ($retcode === -107 || $retcode === 49 || $retcode === 503) {
-                // {"retcode":49,"retmsg":"","time":"1722509933"}
+            } elseif ($retcode === 17) {
                 $data = [
                     'status' => 2,
-                    'msg'    => "二维码已超时，如需继续登录请重新获取",
+                    'msg'    => "二维码已超时：{$retmsg}",
                 ];
-            } elseif ($retcode === 3) {
-                //  {"retcode":3,"retmsg":"获取二维码状态失败","time":"1700825011"} （应该是框架QQ存在，但是已超时(连接断开)会返回这个状态，和下面的code-4相反）
-                $data = [
-                    'status' => 3,
-                    'msg'    => "获取二维码状态失败",
-                ];
-            } elseif ($retcode === -2) {
-                //  {"retcode":-2,"retmsg":"扫码完成，登录失败错误代码:-2","time":"1701101228"}
+            } elseif ($retcode === 238) {
+                // 禁止登录，请使用手Q扫描二维码或短信登录。
                 $data = [
                     'status' => 2,
-                    'msg'    => "扫码完成但已被风控，请使用新协议",
-                ];
-            } elseif ($retcode === -4) {
-                //  {"retcode":-4,"retmsg":"查询二维码状态失败！错误代码 -4","time":"1722509284"}  （比如登录期间，QQ从框架中删除掉就会返回，应该就是QQ不存在框架中返回这个状态）
-                $data = [
-                    'status' => 2,
-                    'msg'    => "超时登录，如需继续登录请重新获取",
+                    'msg'    => "请使用最新版的手机QQ进行扫码，或改一个新的QQ密码",
                 ];
             } else {
                 //                if (function_exists('trace')) {
@@ -875,7 +825,7 @@ class Dulu extends Common
                 $final_data[$qq]['登录协议']     = $info['设备'] . $info['版本'];
                 $final_data[$qq]['登录信息']     = $info['在线'];
                 $final_data[$qq]['最后错误信息'] = $info['状态'] === 1 ? '' : $info['附加信息'];
-                $final_data[$qq]['GUID']         = $info['GUID'];
+                $final_data[$qq]['GUID']         = $info['GUID'] ?? '';
             }
         }
         return $final_data;
@@ -1284,7 +1234,8 @@ class Dulu extends Common
     public function getFriendFilterList(): array
     {
         $json = $this->query('/getFriendFilterList');
-        $arr  = json_decode($json, true);
+        // {"code":0,"message":"3243935989获取过滤列表成功","data":[{"qq":3926938282,"uid":"u_xdcIunds0kFyUA0BKV5Sjw","nick":"水也很生情","qa":"我是水也很生情","source":"QQ空间","time":1788825662},{"qq":3657568034,"uid":"u_oKlip4czpy0ufRLzSFF2sw","nick":"黑夜","qa":"我是黑夜","source":"QQ空间","time":1788787994},{"qq":3101534127,"uid":"u_o6eX6EpvgCZ9aXm4MKevTQ","nick":"伤了心的互喽王","qa":"我是伤了心的互喽王","source":"QQ空间","time":1788787737}]}
+        $arr = json_decode($json, true);
         if (isset($arr['code']) && $arr['code'] === 0) {
             return [
                 'status' => 1,
@@ -2265,6 +2216,577 @@ class Dulu extends Common
             return [
                 'status' => $arr['code'],
                 'msg'    => $arr['message'] ?? "获取code值失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * QQ宠物
+     * 查询资料
+     *
+     * @param string $qq
+     * @param string $to_userid
+     * @param bool   $need_hex
+     *
+     * @return array
+     */
+    public function petGetInfo(string $qq, string $to_userid, bool $need_hex = false): array
+    {
+        $param = [
+            'qq'        => $qq,
+            'to_userid' => $to_userid,
+            'need_hex'  => $need_hex,
+        
+        ];
+        $json  = $this->query('/petGetInfo', $param);
+        // {
+        //    "code": 0,
+        //    "message": "查询成功",
+        //    "data": {
+        //        "userid": "OTA4Nzc3NDU0LTAtMi0xNzg1MTQ5MTQ4MDUw",
+        //        "status": 3,
+        //        "mood": 72,
+        //        "energy": 62,
+        //        "cleanliness": 59
+        //    }
+        //}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "执行失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "执行失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * QQ宠物
+     * 开始学习
+     *
+     * @param string $qq
+     * @param string $userid
+     * @param int    $task_id
+     * @param string $task_name
+     * @param bool   $need_hex
+     *
+     * @return array
+     */
+    public function petRunStudy(string $qq, string $userid, int $task_id, string $task_name, bool $need_hex = false): array
+    {
+        $param = [
+            'qq'        => $qq,
+            'userid'    => $userid,
+            'type_id'   => 6100,
+            'task_id'   => $task_id,
+            'task_name' => $task_name,
+            'need_hex'  => $need_hex,
+        ];
+        $json  = $this->query('/petRunMission', $param);
+        // {
+        //    "code": 0,
+        //    "message": "成功",
+        //    "data": {
+        //        "task_id": "6100_c3ac7850-875c-409c-88fb-9e4ed0878d2e"
+        //    }
+        //}
+        
+        // {
+        //    "code": 135054,
+        //    "message": "你的宠物已经出门了，稍后再来吧～",
+        //    "data": {
+        //        "task_id": ""
+        //    }
+        //}
+        
+        // 课程id已经低于当前的学习等级
+        // Array
+        //(
+        //    [code] => 135071
+        //    [message] => 你的宠物已升学，快去学习新阶段的课程吧～
+        //)
+        
+        // 课程id不正确
+        // Array
+        //(
+        //    [code] => 135010
+        //    [message] => 宠物出行-课程/职业/事件配置为空
+        //)
+        
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "执行失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "执行失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * QQ宠物
+     * 喂食
+     *
+     * @param string $qq
+     * @param string $to_userid
+     * @param int    $toqq
+     * @param int    $food_id
+     * @param bool   $need_hex
+     *
+     * @return array
+     */
+    public function petFoodFeed(string $qq, string $to_userid, int $toqq = 0, int $food_id = 9990032, bool $need_hex = false): array
+    {
+        $param = [
+            'qq'        => $qq,
+            'to_userid' => $to_userid,
+            'toqq'      => $toqq,
+            'food_id'   => $food_id,
+            'need_hex'  => $need_hex,
+        ];
+        $json  = $this->query('/petFoodFeed', $param);
+        // {
+        //    "code": 0,
+        //    "message": "查询成功",
+        //    "data": {
+        //        "status": 0,
+        //        "message": ""
+        //    }
+        //}
+        
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "执行失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "执行失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * QQ宠物
+     * 洗澡
+     *
+     * @param string $qq
+     * @param string $to_userid 喂食给谁就用谁的userid
+     * @param int    $toqq      喂食给谁，0为自己
+     * @param int    $use_num   用几个物品 默认1
+     * @param int    $bath_id   物品ID 暂时都用1
+     * @param bool   $need_hex
+     *
+     * @return array
+     */
+    public function petBath(string $qq, string $to_userid, int $toqq, int $use_num = 1, int $bath_id = 1, bool $need_hex = false): array
+    {
+        $param = [
+            'qq'        => $qq,
+            'to_userid' => $to_userid,
+            'toqq'      => $toqq,
+            'use_num'   => $use_num,
+            'bath_id'   => $bath_id,
+            'need_hex'  => $need_hex,
+        ];
+        $json  = $this->query('/petBath', $param);
+        // {
+        //    "code": 0,
+        //    "message": "查询成功",
+        //    "data": {
+        //        "cleanliness": 100,
+        //        "cleanliness_add": 6,
+        //        "remaining": 16,
+        //        "mood": 99,
+        //        "use_num": 1
+        //    }
+        //}
+        
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "执行失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "执行失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * QQ宠物
+     * 查询对方是否可雇佣以及剩余时长
+     *
+     * @param string $qq
+     * @param string $userid
+     * @param string $to_userid
+     * @param int    $toqq
+     * @param bool   $need_hex
+     *
+     * @return array
+     */
+    public function petGetMissionStatus(string $qq, string $userid, string $to_userid, int $toqq, bool $need_hex = false): array
+    {
+        $param = [
+            'qq'        => $qq,
+            'userid'    => $userid,
+            'to_userid' => $to_userid,
+            'toqq'      => $toqq,
+            'need_hex'  => $need_hex,
+        ];
+        $json  = $this->query('/petGetMissionStatus', $param);
+        // {
+        //    "code": 0,
+        //    "message": "查询成功",
+        //    "data": {
+        //        "status": 20,
+        //        "time_left": 629,
+        //        "time_total": 900,
+        //        "created_at": 0,
+        //        "message": "对方宠物在出行中，稍后再来吧～"
+        //    }
+        //}
+        
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "执行失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "执行失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * QQ宠物
+     * 开始冒险
+     *
+     * @param string $qq
+     * @param string $userid
+     * @param string $task_name 枚举值：晴天、阴天、雨天、打招呼（但是好像并不能影响最终冒险结果）
+     * @param bool   $need_hex
+     *
+     * @return array
+     */
+    public function petRunAdventure(string $qq, string $userid, string $task_name, bool $need_hex = false): array
+    {
+        $param = [
+            'qq'        => $qq,
+            'userid'    => $userid,
+            'type_id'   => 6700,
+            'task_id'   => 0,
+            'task_name' => $task_name,
+            'need_hex'  => $need_hex,
+        ];
+        $json  = $this->query('/petRunMission', $param);
+        // {
+        //    "code": 0,
+        //    "message": "成功",
+        //    "data": {
+        //        "task_id": "6100_c3ac7850-875c-409c-88fb-9e4ed0878d2e"
+        //    }
+        //}
+        
+        // {
+        //    "code": 135054,
+        //    "message": "你的宠物已经出门了，稍后再来吧～",
+        //    "data": {
+        //        "task_id": ""
+        //    }
+        //}
+        
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "执行失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "执行失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 获取HttpConn信息（ip、port、ukey）
+     *
+     * @param string $qq
+     * @param bool   $need_hex
+     *
+     * @return array
+     */
+    public function getHttpConn(string $qq, bool $need_hex = false): array
+    {
+        $param = [
+            'qq'       => $qq,
+            'need_hex' => $need_hex,
+        ];
+        $json  = $this->query('/getHttpConn', $param);
+        // {"code":0,"message":"获取成功","data":{"ukey":"EFAA3A0E29DA9BCA38FED4B0BDD20E4048071C903DB1C0AA4007BE3D6DE398B65F2938E9F1ECEC4ED3BEBC8304D791943492278A287DEAB191A4A4BD1AD57093E7ED11A61C4CE52FD5A4354D8B8AA714E3ADE6AD79C1181519F7D0719C713A072256875E96881301"}}
+        
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "执行失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => $arr['message'],
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "执行失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 框架自身进行身份验证的流程
+     *
+     * @param string|int $qq
+     * @param int        $step
+     * @param string     $ticket
+     * @param string     $randstr
+     * @param string     $areaCode
+     * @param string     $phoneNum
+     * @param string     $mobile
+     *
+     * @return array
+     */
+    public function smsVerify(string|int $qq, int $step, string $ticket, string $randstr, string $areaCode, string $phoneNum, string $mobile): array
+    {
+        $param = [
+            'qq'       => $qq,
+            'step'     => $step,
+            'ticket'   => $ticket,
+            'randstr'  => $randstr,
+            'areaCode' => $areaCode,
+            'phoneNum' => $phoneNum,
+            'mobile'   => $mobile,
+        ];
+        $json  = $this->query('/smsVerify', $param);
+        // 步骤1 {
+        //    "retcode": 0,
+        //    "retmsg": "",
+        //    "phoneType": 1,
+        //    "areaCode": "+86",
+        //    "phoneNum": "187******60",
+        //    "realPhoneType": 1
+        //}
+        // 步骤2 {
+        //    "retcode": 0,
+        //    "retmsg": "",
+        //    "way": 4,
+        //    "resendInterval": 0,
+        //    "sms": "1",
+        //    "sendTo": "106988881700511",
+        //    "faceUrl": ""
+        //}
+        // 步骤3 {
+        //    "retcode": 0,
+        //    "retmsg": ""
+        //}
+        return json_decode($json, true);
+    }
+    
+    /**
+     * 看10秒漫剧
+     * 等级加速
+     *
+     * @return array
+     */
+    public function manju(): array
+    {
+        $param = [
+        ];
+        // {"code":0,"message":"加速完成","data":null,"echo":""}
+        $json = $this->query('/speedManJu', $param);
+        $arr  = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "漫剧加速失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "漫剧加速完成",
+                'data'   => [],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "漫剧加速失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 元宝P图
+     * 等级加速
+     *
+     * @return array
+     */
+    public function yuanbaoAI(): array
+    {
+        $param = [
+        ];
+        // {"code":0,"message":"元宝任务已完成","data":null,"echo":""}
+        // {"code":50006,"message":"滑块已完成但联合登录续登失败：元宝注册需要滑块验证（57002），请打开官方验证链接","data":null,"echo":""}
+        $json = $this->query('/speedYuanBao', $param);
+        $arr  = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "元宝加速失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "元宝加速完成",
+                'data'   => [],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "元宝加速失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 好友申请列表查询
+     *
+     * @param bool $post_event 是否当做「好友请求」事件提交给后端统一处理
+     *
+     * @return array
+     */
+    public function getFriendRequest(bool $post_event = true): array
+    {
+        $param = [
+            'post_event' => $post_event,
+        ];
+        $json  = $this->query('/getFriendRequest', $param);
+        // {"code":0,"message":"获取成功","data":[{"id":1788398427000000,"qq":1413527441,"nick":"-","qa":"我是-","source":"QQ空间被挡访客","status":3,"results":"已同意"},{"id":1770909106000000,"qq":337792525,"nick":"Jamie","qa":"请求添加对方为好友","source":"QQ空间","status":13,"results":"等待验证"}]}
+        $arr = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "查询失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "查询成功",
+                'data'   => $arr['data'],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "查询失败：未知错误",
+            ];
+        }
+    }
+    
+    /**
+     * 创建小游戏擂台并取得成绩
+     * 等级加速
+     *
+     * @return array
+     */
+    public function gameLeiTai(): array
+    {
+        $param = [
+        ];
+        // {"code":0,"message":"今天已经完成","data":null,"echo":""}
+        // {"code":50003,"message":"创建小游戏擂台失败：没有已授权的游戏。请先在 QQ 里进一次擂台页并授权","data":null,"echo":""}
+        $json = $this->query('/speedLeiTai', $param);
+        $arr  = json_decode($json, true);
+        if (!$arr || !isset($arr['code'])) {
+            return [
+                'status' => -1,
+                'msg'    => "小游戏擂台加速失败：访问超时",
+            ];
+        }
+        if ($arr['code'] === 0) { // 返回正常
+            return [
+                'status' => 1,
+                'msg'    => "小游戏擂台加速完成",
+                'data'   => [],
+            ];
+        } else {
+            return [
+                'status' => $arr['code'],
+                'msg'    => $arr['message'] ?? "小游戏擂台加速失败：未知错误",
             ];
         }
     }

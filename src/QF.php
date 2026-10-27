@@ -14,35 +14,58 @@ class QF extends Common
 {
     
     public Qy|Xlz|NapCat|EBotNT|Dream|Dulu $sdk;
+    public int                             $channel;
     
     /**
      *
      * @param string $host  IP或域名
      * @param int    $robot 框架QQ
      * @param int    $port  api端口
+     * @param int    $channel
      *
      * @return Qy|Xlz|NapCat|EBotNT|Dream|Dulu
      */
-    final public function init(string $host, int $robot, int $port): Qy|Xlz|NapCat|EBotNT|Dream|Dulu
+    final public function init(string $host, int $robot, int $port, int $channel = 0): Qy|Xlz|NapCat|EBotNT|Dream|Dulu
     {
-        if (str_starts_with($port, 4)) {
-            $this->sdk = new Qy();
-        } elseif (str_starts_with($port, 5)) {
-            $this->sdk = new NapCat();
-        } elseif (str_starts_with($port, 8)) {
-            $this->sdk = new EBotNT();
-        } elseif (str_starts_with($port, 3)) {
-            $this->sdk = new Dream();
-        } elseif (str_starts_with($port, 7)) {
-            $this->sdk = new Dulu();
+        $this->channel = $channel;
+        
+        if ($channel > 0) {
+            $this->sdk = match ($channel) {
+                1       => new Qy(),
+                3       => new Dream(),
+                4       => new NapCat(),
+                5       => new Dulu(),
+                default => new Xlz(),
+            };
         } else {
-            // port: 6
-            $this->sdk = new Xlz();
+            if (str_starts_with($port, 4)) {
+                $this->sdk = new Qy();
+            } elseif (str_starts_with($port, 5)) {
+                $this->sdk = new NapCat();
+            } elseif (str_starts_with($port, 8)) {
+                $this->sdk = new EBotNT();
+            } elseif (str_starts_with($port, 3)) {
+                $this->sdk = new Dream();
+            } elseif (str_starts_with($port, 7)) {
+                $this->sdk = new Dulu();
+            } else {
+                // port: 6
+                $this->sdk = new Xlz();
+            }
         }
+        
         
         $this->sdk->init($host, $robot, $port);
         
         return $this->sdk;
+    }
+    
+    /**
+     * 获取channel
+     */
+    public function getChannel(): int
+    {
+        return $this->channel;
     }
     
     //    /**
